@@ -24,8 +24,7 @@
         "@nestjs/common": "^8.4.4",
         "@nestjs/core": "^8.4.4",
         "@nestjs/platform-express": "^8.4.4",
-        "chalk": "^5.0.1",
-        "copydirectory": "^0.0.9",
+        "chalk": "^4.1.2",
         "dotenv": "^16.0.0",
         "reflect-metadata": "^0.1.13",
         "rxjs": "^7.5.5"
