@@ -9,9 +9,17 @@ import { LoggingInterceptor } from '@algoan/nestjs-logging-interceptor';
 async function bootstrap() {
     const port = process.env.port != null ? parseInt(process.env.port) : 3000;
 
-    const logger = WinstonModule.createLogger({
-        transports: [new DailyRotateFile({ filename: 'data/logs/log.txt' }), new winston.transports.Console()],
-    });
+    const logPath = process.env.logPath || 'data/logs/log.txt';
+    const transports: winston.transport[] = [];
+
+    if (process.env.logType != 'console') {
+        transports.push(new DailyRotateFile({ filename: logPath }));
+    }
+    if (process.env.logType != 'file') {
+        new winston.transports.Console();
+    }
+
+    const logger = WinstonModule.createLogger({ transports });
 
     const app = await NestFactory.create(AppModule, {
         logger,
