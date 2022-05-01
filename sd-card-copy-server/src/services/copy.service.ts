@@ -7,7 +7,6 @@ import copyProgress, {
     isIFilesProgress,
 } from 'copy-progress';
 import { filter, last, map } from 'rxjs';
-import chalk from 'chalk';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
@@ -15,7 +14,7 @@ export class CopyService {
     constructor(@Inject(WINSTON_MODULE_NEST_PROVIDER) private readonly logger: LoggerService) {}
 
     startCopy(params: CopyParams) {
-        const targetPath = params.targetPath || process.env.targetPath;
+        const targetPath = params.targetPath;
 
         this.logger.log(`Copying ${params.sourcePath} -> ${targetPath}`);
 

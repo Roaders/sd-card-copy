@@ -4,6 +4,7 @@ import { CopyService } from './services/copy.service';
 import { WinstonModule } from 'nest-winston';
 import * as DailyRotateFile from 'winston-daily-rotate-file';
 import * as winston from 'winston';
+import { ConfigService } from './services';
 
 @Module({
     imports: [
@@ -13,6 +14,6 @@ import * as winston from 'winston';
         }),
     ],
     controllers: [AppController],
-    providers: [CopyService],
+    providers: [CopyService, ConfigService],
 })
 export class AppModule {}
