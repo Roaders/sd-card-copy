@@ -1,4 +1,4 @@
-import { Injectable, LoggerService, Inject } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CopyParams } from '../contracts';
 import copyProgress, {
     configureFileCopyProgressFunction,
@@ -7,11 +7,10 @@ import copyProgress, {
     isIFilesProgress,
 } from 'copy-progress';
 import { filter, last, map } from 'rxjs';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
 export class CopyService {
-    constructor(@Inject(WINSTON_MODULE_NEST_PROVIDER) private readonly logger: LoggerService) {}
+    private logger = new Logger(CopyService.name);
 
     startCopy(params: CopyParams) {
         const targetPath = params.targetPath;

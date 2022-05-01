@@ -1,14 +1,16 @@
-import { Inject, Injectable, LoggerService } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { IAppConfig } from '../contracts';
 import { promisify } from 'util';
 import { readFile } from 'fs';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { resolve } from 'path';
 
 const asyncReadFile = promisify(readFile);
 
+const defaultConfigPath = 'data/config.json';
+
 @Injectable()
 export class ConfigService {
-    constructor(@Inject(WINSTON_MODULE_NEST_PROVIDER) private readonly logger: LoggerService) {}
+    private logger = new Logger(ConfigService.name);
 
     private _config: IAppConfig | undefined;
 
@@ -17,15 +19,22 @@ export class ConfigService {
             return this._config;
         }
 
-        const configPath = process.env.configPath;
+        const configPath = resolve(process.env.configPath || defaultConfigPath);
 
         let configFile: Partial<IAppConfig> = {};
 
         if (configPath != null) {
-            this.logger.log(`Loading config from '${configPath}'`);
-            const rawFile = await asyncReadFile(configPath);
-
-            configFile = JSON.parse(rawFile.toString());
+            try {
+                const rawFile = await asyncReadFile(configPath);
+                configFile = JSON.parse(rawFile.toString());
+                this.logger.log(`Config loaded from '${configPath}'`);
+            } catch (e) {
+                if (configPath != resolve(defaultConfigPath)) {
+                    this.logger.warn(
+                        `Could not load config file from '${configPath}'. Continuing with default config.`
+                    );
+                }
+            }
         }
 
         this._config = configFile;

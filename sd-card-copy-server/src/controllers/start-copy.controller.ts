@@ -1,16 +1,13 @@
-import { Controller, Get, HttpException, HttpStatus, Inject, LoggerService, Query } from '@nestjs/common';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { Controller, Get, HttpException, HttpStatus, Logger, Query } from '@nestjs/common';
 import { CopyParams } from '../contracts';
 import { ConfigService } from '../services';
 import { CopyService } from '../services/copy.service';
 
 @Controller('copy-path')
-export class AppController {
-    constructor(
-        private readonly copyService: CopyService,
-        private readonly configService: ConfigService,
-        @Inject(WINSTON_MODULE_NEST_PROVIDER) private readonly logger: LoggerService
-    ) {}
+export class CopyPathController {
+    private logger = new Logger(CopyPathController.name);
+
+    constructor(private readonly copyService: CopyService, private readonly configService: ConfigService) {}
 
     @Get()
     public async copyPath(@Query('source-path') sourcePath?: string, @Query('target-path') targetPath?: string) {
