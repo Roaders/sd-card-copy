@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, LoggerService, Inject } from '@nestjs/common';
 import { CopyParams } from '../contracts';
 import copyProgress, {
     configureFileCopyProgressFunction,
@@ -8,13 +8,16 @@ import copyProgress, {
 } from 'copy-progress';
 import { filter, last, map } from 'rxjs';
 import chalk from 'chalk';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
 export class CopyService {
+    constructor(@Inject(WINSTON_MODULE_NEST_PROVIDER) private readonly logger: LoggerService) {}
+
     startCopy(params: CopyParams) {
         const targetPath = params.targetPath || process.env.targetPath;
 
-        console.log(`Copying ${params.sourcePath} -> ${targetPath}`);
+        this.logger.log(`Copying ${params.sourcePath} -> ${targetPath}`);
 
         const filesStream = streamScanPathResults(params.sourcePath).pipe(
             map((file) => mapFileStats({ file, outDir: targetPath, sourceDir: params.sourcePath }))
@@ -27,10 +30,10 @@ export class CopyService {
             .pipe(filter(isIFilesProgress), last())
             .subscribe({
                 next: (lastValue) =>
-                    console.log(
+                    this.logger.log(
                         `Copied ${lastValue.totalFiles} files (${lastValue.totalBytes}b) ${params.sourcePath} -> ${targetPath} in ${lastValue.elapsed}ms`
                     ),
-                error: (err) => console.log(`${chalk.red('ERR: ')}`, err),
+                error: (err) => this.logger.error(`ERR: `, err),
             });
     }
 }
