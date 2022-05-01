@@ -16,7 +16,7 @@ async function bootstrap() {
         transports.push(new DailyRotateFile({ filename: logPath }));
     }
     if (process.env.logType != 'file') {
-        new winston.transports.Console();
+        transports.push(new winston.transports.Console());
     }
 
     const logger = WinstonModule.createLogger({ transports });
