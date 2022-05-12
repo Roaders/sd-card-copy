@@ -41,7 +41,10 @@ By default a json config file is loaded from `data/config.json`.
 
 **targetPath**
 
-Optional. If set provides the default target path when copying so that it does not have to be specified for each request.
+Optional. If set provides the default target path when copying so that it does not have to be specified for each request. The following tokens can be included:
+
+  * `{DATE}` - will be replaced with milliseconds since epoch
+  * `{DATE yyyy_MM_dd}` / `{DATE "EEE do MMM yyyy"}` Formatted date using [date-fns formatting tokens](https://date-fns.org/v2.28.0/docs/format).
 
 
 ## usbmount
