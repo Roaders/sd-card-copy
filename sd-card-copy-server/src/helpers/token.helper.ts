@@ -1,6 +1,25 @@
+import { TokenReplacementStrategy } from '../contracts';
+
+/* eslint-disable no-case-declarations */
 const tokenStart = '{';
 const tokenEnd = '}';
 const escapeCharacter = '\\';
+
+export function applyTokenReplacementsStrategies(input: string, strategies: TokenReplacementStrategy[]): string {
+    return replaceTokens(input, (token) => {
+        const { tokenName, tokenArgs } = getTokenParts(token);
+
+        for (let index = 0; index < strategies.length; index++) {
+            const result = strategies[index](tokenName, tokenArgs, token, input);
+
+            if (result != null) {
+                return result;
+            }
+        }
+
+        return token;
+    });
+}
 
 export function replaceTokens(tokenString: string, replacer: (token: string) => string): string {
     const segments: string[] = [];
@@ -53,4 +72,62 @@ export function replaceTokens(tokenString: string, replacer: (token: string) => 
     }
 
     return segments.join('');
+}
+
+// https://regex101.com/r/t8cvrY/1
+const tokenRegExp = /\{(\w+) *(.+)?}/;
+
+export function getTokenParts(token: string):
+    | {
+          tokenName: string;
+          tokenArgs?: string[];
+      }
+    | undefined {
+    const matchResult = tokenRegExp.exec(token);
+
+    if (matchResult == null) {
+        return undefined;
+    }
+
+    const tokenArgs = matchResult[2] != null ? buildArgumentsList(matchResult[2]) : undefined;
+
+    return { tokenName: matchResult[1], tokenArgs };
+}
+
+const SPACE = ' ';
+const QUOTE = `"`;
+
+function buildArgumentsList(input: string, tokenArguments: string[] = []): string[] {
+    if (input === '') {
+        return tokenArguments;
+    }
+
+    switch (input.charAt(0)) {
+        case SPACE:
+            return buildArgumentsList(input.substring(1), tokenArguments);
+        case QUOTE:
+            return popFirstArgument(input, tokenArguments, QUOTE);
+        default:
+            return popFirstArgument(input, tokenArguments);
+    }
+}
+
+function popFirstArgument(input: string, tokenArguments: string[] = [], delimiter = SPACE): string[] {
+    while (input.charAt(0) === delimiter) {
+        input = input.substring(1);
+    }
+
+    let argumentEnd = input.indexOf(delimiter);
+
+    while (input.charAt(argumentEnd - 1) === escapeCharacter) {
+        argumentEnd = input.indexOf(delimiter, argumentEnd + 1);
+    }
+
+    if (argumentEnd >= 0) {
+        tokenArguments.push(input.substring(0, argumentEnd));
+        return buildArgumentsList(input.substring(argumentEnd + 1), tokenArguments);
+    } else {
+        tokenArguments.push(input);
+        return tokenArguments;
+    }
 }

@@ -6,3 +6,10 @@ export type CopyParams = {
 export interface IAppConfig {
     targetPath?: string;
 }
+
+export type TokenReplacementStrategy = (
+    tokenName: string,
+    tokenArgs: string[] | undefined,
+    token: string,
+    path: string
+) => string | undefined;
