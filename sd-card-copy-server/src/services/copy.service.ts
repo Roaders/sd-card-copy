@@ -23,8 +23,11 @@ export class CopyService {
 
     private logger = new Logger(CopyService.name);
 
-    startCopy(params: CopyParams) {
-        const targetPath = applyTokenReplacementsStrategies(params.targetPath, this.defaultTokenReplacementStrategies);
+    public async startCopy(params: CopyParams) {
+        const targetPath = await applyTokenReplacementsStrategies(
+            params.targetPath,
+            this.defaultTokenReplacementStrategies
+        );
 
         this.logger.log(`Copying ${params.sourcePath} -> ${targetPath}`);
 

@@ -12,4 +12,4 @@ export type TokenReplacementStrategy = (
     tokenArgs: string[] | undefined,
     token: string,
     path: string
-) => string | undefined;
+) => string | Promise<string | undefined> | undefined;

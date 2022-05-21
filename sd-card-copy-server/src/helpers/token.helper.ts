@@ -5,12 +5,15 @@ const tokenStart = '{';
 const tokenEnd = '}';
 const escapeCharacter = '\\';
 
-export function applyTokenReplacementsStrategies(input: string, strategies: TokenReplacementStrategy[]): string {
-    return replaceTokens(input, (token) => {
+export async function applyTokenReplacementsStrategies(
+    input: string,
+    strategies: TokenReplacementStrategy[]
+): Promise<string> {
+    return replaceTokens(input, async (token) => {
         const { tokenName, tokenArgs } = getTokenParts(token);
 
         for (let index = 0; index < strategies.length; index++) {
-            const result = strategies[index](tokenName, tokenArgs, token, input);
+            const result = await strategies[index](tokenName, tokenArgs, token, input);
 
             if (result != null) {
                 return result;
@@ -21,7 +24,10 @@ export function applyTokenReplacementsStrategies(input: string, strategies: Toke
     });
 }
 
-export function replaceTokens(tokenString: string, replacer: (token: string) => string): string {
+export async function replaceTokens(
+    tokenString: string,
+    replacer: (token: string) => string | Promise<string>
+): Promise<string> {
     const segments: string[] = [];
 
     let tokenIndex = 0;
@@ -66,7 +72,7 @@ export function replaceTokens(tokenString: string, replacer: (token: string) => 
             segments.push(tokenString.substring(tokenIndex, nextStartToken));
             const tokenEnd = nextEndToken + 1;
             const token = tokenString.substring(nextStartToken, tokenEnd);
-            segments.push(replacer(token));
+            segments.push(await replacer(token));
             tokenIndex = tokenEnd;
         }
     }

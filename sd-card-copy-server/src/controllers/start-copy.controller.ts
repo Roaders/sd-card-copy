@@ -12,7 +12,7 @@ export class CopyPathController {
     @Get()
     public async copyPath(@Query('source-path') sourcePath?: string, @Query('target-path') targetPath?: string) {
         const params = await this.sanitiseParams({ sourcePath, targetPath });
-        this.copyService.startCopy(params);
+        return this.copyService.startCopy(params);
     }
 
     private async sanitiseParams(params: Partial<CopyParams>): Promise<CopyParams> {

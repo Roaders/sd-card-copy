@@ -47,6 +47,13 @@ describe(`token helper`, () => {
                 setup: (owner) => owner.setupFunction('two', () => 'REPLACED_TWO'),
             },
             {
+                description: 'handle a promise returned rather than a string',
+                input: `pre {TOKEN} post`,
+                expected: `pre REPLACED_TWO post`,
+                expectedStrategies: ['one', 'two'],
+                setup: (owner) => owner.setupFunction('two', () => Promise.resolve('REPLACED_TWO')),
+            },
+            {
                 description: 'use the first strategy that returns a result',
                 input: `pre {TOKEN} post`,
                 expected: `pre REPLACED_ONE post`,
@@ -90,11 +97,11 @@ describe(`token helper`, () => {
 
         tests.forEach(
             ({ description: name, input, expected, expectedStrategies: expectedFunctions, setup, validation }) => {
-                it(`should ${name}`, () => {
+                it(`should ${name}`, async () => {
                     if (setup != null) {
                         setup(mockStrategyOwner);
                     }
-                    const result = applyTokenReplacementsStrategies(input, [
+                    const result = await applyTokenReplacementsStrategies(input, [
                         mockStrategyOwner.mock.one,
                         mockStrategyOwner.mock.two,
                         mockStrategyOwner.mock.three,
@@ -156,7 +163,7 @@ describe(`token helper`, () => {
         tests.forEach(({ input, expected, expectedTokens }) => {
             it(`given the string '${input}' it should return ${expected} with tokens: ${JSON.stringify(
                 expectedTokens
-            )}`, () => {
+            )}`, async () => {
                 const tokens: string[] = [];
 
                 const replaceFunction = (token: string) => {
@@ -164,7 +171,7 @@ describe(`token helper`, () => {
                     return `REPLACED`;
                 };
 
-                const result = replaceTokens(input, replaceFunction);
+                const result = await replaceTokens(input, replaceFunction);
                 expect(result).toEqual(expected);
                 expect(tokens).toEqual(expectedTokens);
             });
