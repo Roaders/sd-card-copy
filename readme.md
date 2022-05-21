@@ -29,13 +29,14 @@ Defaults to `data/logs/log.txt`. Logs are rotated daily.
 
 Can be `file`. `console` or `both`. Defaults to `both`
 
-### JSON Config
+### Config
 
-By default a json config file is loaded from `data/config.json`.
+By default a json config file is loaded from `data/config.js`.
 
-```json
-{
-    "targetPath": "C:/video"
+```js
+module.exports = {
+    targetPath: "C:/video/{DATE yyyy}/{DATE MMM}",
+    strategies: [(token) => (token === 'MY_TOKEN' ? 'REPLACED_CONTENT' : undefined)],
 }
 ```
 
@@ -43,9 +44,23 @@ By default a json config file is loaded from `data/config.json`.
 
 Optional. If set provides the default target path when copying so that it does not have to be specified for each request. The following tokens can be included:
 
-  * `{DATE}` - will be replaced with milliseconds since epoch
+  * `{TIMESTAMP}` - replaced with milliseconds since epoch
+  * `{DATE}` - will be replaced with the default javascript `toDateString()` formatted date.
   * `{DATE yyyy_MM_dd}` / `{DATE "EEE do MMM yyyy"}` Formatted date using [date-fns formatting tokens](https://date-fns.org/v2.28.0/docs/format).
 
+**strategies**
+Custom path replacement strategies can be included in your config. The strategy must be a `TokenReplacementStrategy`:
+
+```ts
+export type TokenReplacementStrategy = (
+    tokenName: string, // Given {DATE} will be DATE
+    tokenArgs: string[] | undefined, // Given {DATE someFormat, someOtherArg} will be ['someFormat', 'someOtherArg']
+    token: string, // Given {DATE} will be {DATE}
+    targetPath: string, // entire target path e.g. C:/fileSump/{TOKEN_ONE}/{TOKEN_TWO}
+    sourcePath: string // source folder we are copying from
+) => string | Promise<string | undefined> | undefined; // if token cannot be handled by strategy return undefined
+```
+example strategies can be seen at `sd-card-copy-server\src\strategies`
 
 ## usbmount
 

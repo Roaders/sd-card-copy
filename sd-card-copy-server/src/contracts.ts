@@ -9,9 +9,9 @@ export interface IAppConfig {
 }
 
 export type TokenReplacementStrategy = (
-    tokenName: string,
-    tokenArgs: string[] | undefined,
-    token: string,
-    targetPath: string,
-    sourcePath: string
-) => string | Promise<string | undefined> | undefined;
+    tokenName: string, // Given {DATE} will be DATE
+    tokenArgs: string[] | undefined, // Given {DATE someFormat, someOtherArg} will be ['someFormat', 'someOtherArg']
+    token: string, // Given {DATE} will be {DATE}
+    targetPath: string, // entire target path e.g. C:/fileSump/{TOKEN_ONE}/{TOKEN_TWO}
+    sourcePath: string // source folder we are copying from
+) => string | Promise<string | undefined> | undefined; // if token cannot be handled by strategy return undefined
