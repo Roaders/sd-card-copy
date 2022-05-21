@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CopyParams } from '../contracts';
+import { CopyParams, TokenReplacementStrategy } from '../contracts';
 import copyProgress, {
     configureFileCopyProgressFunction,
     mapFileStats,
@@ -7,13 +7,24 @@ import copyProgress, {
     isIFilesProgress,
 } from 'copy-progress';
 import { filter, last, map } from 'rxjs';
+import { DateStrategies } from '../strategies/date.strategy';
+import { applyTokenReplacementsStrategies } from '../helpers';
 
 @Injectable()
 export class CopyService {
+    private readonly defaultTokenReplacementStrategies: TokenReplacementStrategy[];
+
+    constructor(dateStrategies: DateStrategies) {
+        this.defaultTokenReplacementStrategies = [
+            dateStrategies.formattedDateStrategy,
+            dateStrategies.timestampStrategy,
+        ];
+    }
+
     private logger = new Logger(CopyService.name);
 
     startCopy(params: CopyParams) {
-        const targetPath = params.targetPath;
+        const targetPath = applyTokenReplacementsStrategies(params.targetPath, this.defaultTokenReplacementStrategies);
 
         this.logger.log(`Copying ${params.sourcePath} -> ${targetPath}`);
 

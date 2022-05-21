@@ -4,6 +4,8 @@ import { CopyService } from './services/copy.service';
 import { ConfigService } from './services';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from 'nestjs-logging-interceptor';
+import { DateStrategies } from './strategies/date.strategy';
+import { TimestampProvider } from './providers';
 
 @Module({
     controllers: [CopyPathController],
@@ -15,6 +17,8 @@ import { LoggingInterceptor } from 'nestjs-logging-interceptor';
             provide: APP_INTERCEPTOR,
             useClass: LoggingInterceptor,
         },
+        DateStrategies,
+        TimestampProvider,
     ],
 })
 export class AppModule {}
