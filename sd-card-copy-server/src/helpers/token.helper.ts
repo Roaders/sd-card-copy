@@ -6,14 +6,15 @@ const tokenEnd = '}';
 const escapeCharacter = '\\';
 
 export async function applyTokenReplacementsStrategies(
-    input: string,
+    targetPath: string,
+    sourcePath: string,
     strategies: TokenReplacementStrategy[]
 ): Promise<string> {
-    return replaceTokens(input, async (token) => {
+    return replaceTokens(targetPath, async (token) => {
         const { tokenName, tokenArgs } = getTokenParts(token);
 
         for (let index = 0; index < strategies.length; index++) {
-            const result = await strategies[index](tokenName, tokenArgs, token, input);
+            const result = await strategies[index](tokenName, tokenArgs, token, targetPath, sourcePath);
 
             if (result != null) {
                 return result;

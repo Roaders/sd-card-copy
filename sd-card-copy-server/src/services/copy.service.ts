@@ -26,6 +26,7 @@ export class CopyService {
     public async startCopy(params: CopyParams) {
         const targetPath = await applyTokenReplacementsStrategies(
             params.targetPath,
+            params.sourcePath,
             this.defaultTokenReplacementStrategies
         );
 

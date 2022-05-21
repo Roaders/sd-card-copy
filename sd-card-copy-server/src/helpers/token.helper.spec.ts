@@ -19,6 +19,8 @@ type StrategyTest = {
     validation?: (owner: IMocked<StrategyOwner>) => void;
 };
 
+const sourcePath = 'mocked/source/path';
+
 describe(`token helper`, () => {
     describe(`applyTokenReplacementsStrategies`, () => {
         let mockStrategyOwner: IMocked<StrategyOwner>;
@@ -79,7 +81,8 @@ describe(`token helper`, () => {
                                 'TOKEN',
                                 ['one', 'two', 'three'],
                                 '{TOKEN one two three}',
-                                'pre {TOKEN one two three} post'
+                                'pre {TOKEN one two three} post',
+                                sourcePath
                             )
                     ).wasCalledOnce(),
             },
@@ -101,7 +104,7 @@ describe(`token helper`, () => {
                     if (setup != null) {
                         setup(mockStrategyOwner);
                     }
-                    const result = await applyTokenReplacementsStrategies(input, [
+                    const result = await applyTokenReplacementsStrategies(input, sourcePath, [
                         mockStrategyOwner.mock.one,
                         mockStrategyOwner.mock.two,
                         mockStrategyOwner.mock.three,
@@ -115,7 +118,7 @@ describe(`token helper`, () => {
                             expect(
                                 mockStrategyOwner
                                     .withFunction(functionName)
-                                    .withParametersEqualTo('TOKEN', undefined, '{TOKEN}', input)
+                                    .withParametersEqualTo('TOKEN', undefined, '{TOKEN}', input, sourcePath)
                             ).wasCalledOnce();
                         });
                     }

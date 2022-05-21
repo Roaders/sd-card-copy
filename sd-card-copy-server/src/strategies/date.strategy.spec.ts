@@ -23,11 +23,13 @@ describe(`${DateStrategies.name} (date.strategy)`, () => {
 
     describe(`timestampStrategy`, () => {
         it('should return undefined when token is not correct', () => {
-            expect(createInstance().timestampStrategy('incorrectToken', [], '', '')).toBeUndefined();
+            expect(
+                createInstance().timestampStrategy('incorrectToken', [], `{incorrectToken}`, 'target', 'source')
+            ).toBeUndefined();
         });
 
         it('should return a timestamp', () => {
-            const result = createInstance().timestampStrategy(TIMESTAMP_TOKEN, [], '', '');
+            const result = createInstance().timestampStrategy(TIMESTAMP_TOKEN, [], `{wholeToken}`, 'target', 'source');
 
             expect(typeof result).toBe('string');
             expect(result).toBe('1236297600000');
@@ -36,24 +38,38 @@ describe(`${DateStrategies.name} (date.strategy)`, () => {
 
     describe(`formattedDateStrategy`, () => {
         it('should return undefined when token is not correct', () => {
-            expect(createInstance().formattedDateStrategy('incorrectToken', [], '', '')).toBeUndefined();
+            expect(
+                createInstance().formattedDateStrategy('incorrectToken', [], `{incorrectToken}`, 'target', 'source')
+            ).toBeUndefined();
         });
 
         it('should return date string', () => {
-            const result = createInstance().formattedDateStrategy(DATE_TOKEN, [], '', '');
+            const result = createInstance().formattedDateStrategy(DATE_TOKEN, [], `{wholeToken}`, 'target', 'source');
 
             expect(result).toBe('Fri Mar 06 2009');
         });
 
         it('should return formatted date when pattern passed', () => {
-            const result = createInstance().formattedDateStrategy(DATE_TOKEN, ['yyyy-MM-dd'], '', '');
+            const result = createInstance().formattedDateStrategy(
+                DATE_TOKEN,
+                ['yyyy-MM-dd'],
+                `{wholeToken}`,
+                'target',
+                'source'
+            );
 
             expect(result).toBe('2009-03-06');
         });
 
         it('should return formatted date when pattern passed', () => {
             const pattern = `'Today is' EEEE 'the' do 'of' LLLL yyyy`;
-            const result = createInstance().formattedDateStrategy(DATE_TOKEN, [pattern], '', '');
+            const result = createInstance().formattedDateStrategy(
+                DATE_TOKEN,
+                [pattern],
+                `{wholeToken}`,
+                'target',
+                'source'
+            );
 
             expect(result).toBe('Today is Friday the 6th of March 2009');
         });
