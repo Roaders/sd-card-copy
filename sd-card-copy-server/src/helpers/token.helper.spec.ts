@@ -204,8 +204,8 @@ describe(`token helper`, () => {
                     expect(result).toBeUndefined();
                 } else {
                     expect(result).toBeDefined();
-                    expect(result.tokenName).toBe(expectedName);
-                    expect(result.tokenArgs).toEqual(expectedArgs);
+                    expect(result?.tokenName).toBe(expectedName);
+                    expect(result?.tokenArgs).toEqual(expectedArgs);
                 }
             });
         });

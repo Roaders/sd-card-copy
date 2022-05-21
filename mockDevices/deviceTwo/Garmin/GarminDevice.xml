@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Device xmlns="http://www.garmin.com/xmlschemas/GarminDevice/v2"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.garmin.com/xmlschemas/GarminDevice/v2 http://www.garmin.com/xmlschemas/GarminDevicev2.xsd">
+    <Model>
+        <PartNumber>006-B2417-00</PartNumber>
+        <SoftwareVersion>480</SoftwareVersion>
+        <Description>VIRB Ultra 30</Description>
+    </Model>
+    <Id>12345678</Id>
+    <DisplayName>Ultra</DisplayName>
+</Device>

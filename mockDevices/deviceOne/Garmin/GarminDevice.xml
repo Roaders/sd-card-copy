@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Device xmlns="http://www.garmin.com/xmlschemas/GarminDevice/v2"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.garmin.com/xmlschemas/GarminDevice/v2 http://www.garmin.com/xmlschemas/GarminDevicev2.xsd">
+    <Model>
+        <PartNumber>006-B2687-00</PartNumber>
+        <SoftwareVersion>420</SoftwareVersion>
+        <Description>VIRB 360</Description>
+    </Model>
+    <Id>9876543</Id>
+    <DisplayName>VIRB360</DisplayName>
+</Device>

@@ -7,7 +7,7 @@ import copyProgress, {
     isIFilesProgress,
 } from 'copy-progress';
 import { filter, last, map } from 'rxjs';
-import { DateStrategies } from '../strategies/date.strategy';
+import { DateStrategies } from '../strategies';
 import { applyTokenReplacementsStrategies } from '../helpers';
 
 @Injectable()

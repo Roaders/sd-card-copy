@@ -27,7 +27,7 @@ export class DateStrategies {
             return undefined;
         }
 
-        const dateFormat = tokenArguments[0];
+        const dateFormat = tokenArguments?.[0];
         const now = new Date(this.timestampProvider.getTimeStamp());
 
         if (dateFormat != null && dateFormat.length > 0) {

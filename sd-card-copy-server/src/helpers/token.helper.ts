@@ -11,10 +11,14 @@ export async function applyTokenReplacementsStrategies(
     strategies: TokenReplacementStrategy[]
 ): Promise<string> {
     return replaceTokens(targetPath, async (token) => {
-        const { tokenName, tokenArgs } = getTokenParts(token);
+        const parts = getTokenParts(token);
+
+        if (parts == null) {
+            throw new Error(`UNable to resolve token name from '${token}'`);
+        }
 
         for (let index = 0; index < strategies.length; index++) {
-            const result = await strategies[index](tokenName, tokenArgs, token, targetPath, sourcePath);
+            const result = await strategies[index](parts.tokenName, parts.tokenArgs, token, targetPath, sourcePath);
 
             if (result != null) {
                 return result;

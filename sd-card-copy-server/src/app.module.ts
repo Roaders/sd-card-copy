@@ -4,7 +4,7 @@ import { CopyService } from './services/copy.service';
 import { ConfigService } from './services';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from 'nestjs-logging-interceptor';
-import { DateStrategies } from './strategies/date.strategy';
+import { DateStrategies } from './strategies';
 import { TimestampProvider } from './providers';
 
 @Module({
