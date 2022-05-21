@@ -9,26 +9,31 @@ import copyProgress, {
 import { filter, last, map } from 'rxjs';
 import { DateStrategies } from '../strategies';
 import { applyTokenReplacementsStrategies } from '../helpers';
+import { ConfigService } from './config.service';
 
 @Injectable()
 export class CopyService {
-    private readonly defaultTokenReplacementStrategies: TokenReplacementStrategy[];
+    private readonly defaultReplacementStrategies: TokenReplacementStrategy[];
+    private replacementStrategies: TokenReplacementStrategy[] | undefined;
 
-    constructor(dateStrategies: DateStrategies) {
-        this.defaultTokenReplacementStrategies = [
-            dateStrategies.formattedDateStrategy,
-            dateStrategies.timestampStrategy,
-        ];
+    constructor(dateStrategies: DateStrategies, private configService: ConfigService) {
+        this.defaultReplacementStrategies = [dateStrategies.formattedDateStrategy, dateStrategies.timestampStrategy];
     }
 
     private logger = new Logger(CopyService.name);
 
     public async startCopy(params: CopyParams) {
-        const targetPath = await applyTokenReplacementsStrategies(
-            params.targetPath,
-            params.sourcePath,
-            this.defaultTokenReplacementStrategies
-        );
+        let strategies = this.replacementStrategies;
+
+        if (strategies == null) {
+            const config = await this.configService.getConfig();
+            strategies = this.replacementStrategies = [
+                ...(config.strategies || []),
+                ...this.defaultReplacementStrategies,
+            ];
+        }
+
+        const targetPath = await applyTokenReplacementsStrategies(params.targetPath, params.sourcePath, strategies);
 
         this.logger.log(`Copying ${params.sourcePath} -> ${targetPath}`);
 
