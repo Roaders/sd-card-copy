@@ -28,7 +28,7 @@
         "chalk": "^4.1.2",
         "copy-progress": "^0.6.0",
         "date-fns": "^2.28.0",
-        "dotenv": "^16.0.0",
+        "dotenv": "^16.0.1",
         "nest-winston": "^1.6.2",
         "nestjs-logging-interceptor": "^0.1.1",
         "reflect-metadata": "^0.1.13",

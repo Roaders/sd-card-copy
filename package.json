@@ -1,7 +1,7 @@
 {
     "name": "sd-card-copy",
     "version": "0.0.1",
-    "description": "Automatically SD cards to another folder",
+    "description": "Automatically copies SD cards to another folder",
     "main": "index.js",
     "scripts": {
         "clean": "rimraf dist",
@@ -12,7 +12,7 @@
         "prestart:prod": "npm run clean",
         "start:prod": "npm run -w sd-card-copy-server start:prod",
         "prebuild-release": "write-markdown -vm readme.md",
-        "build-release": "",
+        "build-release": "npm run -w sd-card-copy-server build",
         "write-markdown": "write-markdown -m readme.md"
     },
     "repository": {
