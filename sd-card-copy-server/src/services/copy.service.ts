@@ -43,7 +43,7 @@ export class CopyService {
 
         copyProgress(filesStream, {
             concurrentCopy: 1,
-            copyFunction: configureFileCopyProgressFunction({ force: true, highWaterMark: 1024 * 1024 * 1000 }),
+            copyFunction: configureFileCopyProgressFunction({ force: true, highWaterMark: 1024 * 1024 }),
         })
             .pipe(filter(isIFilesProgress), last())
             .subscribe({

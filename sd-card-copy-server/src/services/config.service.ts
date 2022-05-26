@@ -31,7 +31,7 @@ export class ConfigService {
             } catch (e) {
                 if (configPath != resolve(defaultConfigPath)) {
                     this.logger.warn(
-                        `Could not load config file from '${configPath}'. Continuing with default config.`
+                        `Could not load config file from '${configPath}'. Continuing with default config. ${e}`, 
                     );
                 }
             }
