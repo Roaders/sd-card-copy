@@ -1,7 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { IAppConfig } from '../contracts';
-import { promisify } from 'util';
-import { readFile } from 'fs';
 import { resolve } from 'path';
 
 const defaultConfigPath = 'data/config.json';

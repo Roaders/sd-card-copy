@@ -5,14 +5,17 @@
     "main": "index.js",
     "scripts": {
         "clean": "rimraf dist",
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "test": "npm test -w sd-card-copy-server",
         "lint": "eslint . --ext .ts,.d.ts,.js",
         "lint:fix": "eslint . --ext .ts,.d.ts,.js --fix",
+        "build": "npm run -w sd-card-copy-server build",
         "start": "npm run -w sd-card-copy-server start:dev",
         "prestart:prod": "npm run clean",
         "start:prod": "npm run -w sd-card-copy-server start:prod",
-        "prebuild-release": "write-markdown -vm readme.md",
-        "build-release": "npm run -w sd-card-copy-server build",
+        "prebuild-release": "npm run clean",
+        "verify-release": "concurrently --kill-others-on-fail npm:verify-markdown npm:lint npm:build npm:test",
+        "build-release": "npm run verify-release",
+        "verify-markdown": "write-markdown -vm readme.md",
         "write-markdown": "write-markdown -m readme.md"
     },
     "repository": {
