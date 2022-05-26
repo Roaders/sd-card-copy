@@ -4,11 +4,12 @@
     "description": "Automatically SD cards to another folder",
     "main": "index.js",
     "scripts": {
-        "clean": "rimraf /sd-card-copy-server/dist",
+        "clean": "rimraf dist",
         "test": "echo \"Error: no test specified\" && exit 1",
         "lint": "eslint . --ext .ts,.d.ts,.js",
         "lint:fix": "eslint . --ext .ts,.d.ts,.js --fix",
         "start": "npm run -w sd-card-copy-server start:dev",
+        "prestart:prod": "npm run clean",
         "start:prod": "npm run -w sd-card-copy-server start:prod",
         "prebuild-release": "write-markdown -vm readme.md",
         "build-release": "",

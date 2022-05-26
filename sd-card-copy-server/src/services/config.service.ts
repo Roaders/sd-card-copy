@@ -4,8 +4,6 @@ import { promisify } from 'util';
 import { readFile } from 'fs';
 import { resolve } from 'path';
 
-const asyncReadFile = promisify(readFile);
-
 const defaultConfigPath = 'data/config.json';
 
 @Injectable()
@@ -14,12 +12,16 @@ export class ConfigService {
 
     private _config: IAppConfig | undefined;
 
+    constructor() {
+        this.getConfig();
+    }
+
     public async getConfig(): Promise<IAppConfig> {
         if (this._config != null) {
             return this._config;
         }
 
-        const configPath = resolve(process.env.configPath || defaultConfigPath);
+        const configPath = resolve('../', process.env.configPath || defaultConfigPath);
 
         let configFile: Partial<IAppConfig> = {};
 
@@ -31,7 +33,7 @@ export class ConfigService {
             } catch (e) {
                 if (configPath != resolve(defaultConfigPath)) {
                     this.logger.warn(
-                        `Could not load config file from '${configPath}'. Continuing with default config. ${e}`, 
+                        `Could not load config file from '${configPath}'. Continuing with default config. ${e}`
                     );
                 }
             }
