@@ -51,7 +51,8 @@ Optional. If set provides the default target path when copying so that it does n
 **strategies**
 Custom path replacement strategies can be included in your config. The strategy must be a `TokenReplacementStrategy`:
 
-```ts
+[//]: # (ts-command-line-args_write-markdown_insertCodeBelow file="sd-card-copy-server\src\contracts.ts" codeComment="typescript" )
+```typescript
 export type TokenReplacementStrategy = (
     tokenName: string, // Given {DATE} will be DATE
     tokenArgs: string[] | undefined, // Given {DATE someFormat, someOtherArg} will be ['someFormat', 'someOtherArg']
@@ -60,6 +61,7 @@ export type TokenReplacementStrategy = (
     sourcePath: string // source folder we are copying from
 ) => string | Promise<string | undefined> | undefined; // if token cannot be handled by strategy return undefined
 ```
+[//]: # (ts-command-line-args_write-markdown_insertCodeAbove)
 example strategies can be seen at `sd-card-copy-server\src\strategies`
 
 ## usbmount
@@ -119,20 +121,20 @@ sudo nano /etc/usbmount/makeStartCopyRequest
 
 Copy the following:
 
+[//]: # (ts-command-line-args_write-markdown_insertCodeBelow file="examples\usbMountHook.js" codeComment="js" )
 ```js
 #!/usr/bin/env node
 
 const http = require('http');
 
-async function makeRequest(){
-    // you may need to update your port depending on how you have configured your server
+async function makeRequest() {
     await http.get(`http://localhost:3000/copy-path?source-path=${process.env.UM_MOUNTPOINT}`);
-
-    console.log(`Request done`);
 }
 
 makeRequest();
+
 ```
+[//]: # (ts-command-line-args_write-markdown_insertCodeAbove)
 Make the file executable:
 ```bash
 sudo chmod +x /etc/usbmount/makeStartCopyRequest

@@ -9,7 +9,10 @@
         "lint": "eslint . --ext .ts,.d.ts,.js",
         "lint:fix": "eslint . --ext .ts,.d.ts,.js --fix",
         "start": "npm run -w sd-card-copy-server start:dev",
-        "start:prod": "npm run -w sd-card-copy-server start:prod"
+        "start:prod": "npm run -w sd-card-copy-server start:prod",
+        "prebuild-release": "write-markdown -vm readme.md",
+        "build-release": "",
+        "write-markdown": "write-markdown -m readme.md"
     },
     "repository": {
         "type": "git",
@@ -46,6 +49,7 @@
         "prettier": "^2.6.1",
         "rimraf": "^3.0.2",
         "source-map-support": "^0.5.20",
+        "ts-command-line-args": "^2.3.1",
         "ts-jest": "^27.0.3",
         "ts-loader": "^9.2.3",
         "ts-node": "^10.0.0",
