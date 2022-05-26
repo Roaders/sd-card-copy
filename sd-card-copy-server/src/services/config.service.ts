@@ -19,7 +19,7 @@ export class ConfigService {
             return this._config;
         }
 
-        const configPath = resolve('../', process.env.configPath || defaultConfigPath);
+        const configPath = resolve(process.env.configPath || defaultConfigPath);
 
         let configFile: Partial<IAppConfig> = {};
 
