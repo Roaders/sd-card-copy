@@ -26,8 +26,7 @@ export class ConfigService {
 
         if (configPath != null) {
             try {
-                //const rawFile = await asyncReadFile(configPath);
-                configFile = await require(configPath);
+                configFile = await import(configPath);
                 this.logger.log(`Config loaded from '${configPath}'`);
             } catch (e) {
                 if (configPath != resolve(defaultConfigPath)) {

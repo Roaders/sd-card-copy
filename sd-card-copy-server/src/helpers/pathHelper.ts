@@ -1,5 +1,8 @@
-import { join } from 'path';
+import { resolve, isAbsolute } from 'path';
 
-export function getPath(relativePath: string): string {
-    return join(process.cwd(), '../data', relativePath);
+export function getPath(path: string): string {
+    if(isAbsolute(path)){
+        return path;
+    }
+    return resolve( '../data', path);
 }
