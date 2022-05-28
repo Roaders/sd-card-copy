@@ -6,6 +6,8 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from 'nestjs-logging-interceptor';
 import { DateStrategies } from './strategies';
 import { TimestampProvider } from './providers';
+import cluster from "cluster"
+import { printWorkerId } from './helpers';
 
 @Module({
     controllers: [CopyPathController],
@@ -15,7 +17,7 @@ import { TimestampProvider } from './providers';
         Logger,
         {
             provide: APP_INTERCEPTOR,
-            useClass: LoggingInterceptor,
+            useValue: new LoggingInterceptor(printWorkerId(LoggingInterceptor.name)),
         },
         DateStrategies,
         TimestampProvider,

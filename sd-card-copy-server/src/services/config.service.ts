@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { IAppConfig } from '../contracts';
 import { resolve } from 'path';
-import { getPath } from '../helpers/pathHelper';
+import { getPath, printWorkerId } from '../helpers';
 
 const defaultConfigPath = 'config.json';
 
 @Injectable()
 export class ConfigService {
-    private logger = new Logger(ConfigService.name);
+    private logger = new Logger(printWorkerId(ConfigService.name));
 
     private _config: IAppConfig | undefined;
 
