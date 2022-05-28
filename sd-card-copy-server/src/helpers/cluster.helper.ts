@@ -1,5 +1,5 @@
 import cluster from "cluster";
 
-export function printWorkerId(): string{
-    return cluster.worker != null ? ` (worker:${cluster.worker.id})` : ''
+export function printWorkerId(message: string): string{
+    return cluster.worker != null ? `${message} (worker:${cluster.worker.id})` : message
 }

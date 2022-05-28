@@ -20,7 +20,7 @@ export class CopyService {
         this.defaultReplacementStrategies = [dateStrategies.formattedDateStrategy, dateStrategies.timestampStrategy];
     }
 
-    private logger = new Logger(`${CopyService.name}${printWorkerId()}`);
+    private logger = new Logger(printWorkerId(CopyService.name));
 
     public async startCopy(params: CopyParams) {
         let strategies = this.replacementStrategies;

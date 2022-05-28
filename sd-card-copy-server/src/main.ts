@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
-import { getPath } from './helpers/pathHelper';
+import { getPath, printWorkerId } from 'helpers';
 
 config({ path: getPath('.env') });
 
@@ -44,7 +44,7 @@ async function bootstrap() {
 
     await app.listen(port);
 
-    logger.log(`Application started on port ${port}`);
+    logger.log(printWorkerId(`Application started on port ${port}`));
 }
 
 bootstrap();
