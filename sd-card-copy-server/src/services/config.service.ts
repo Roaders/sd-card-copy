@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { IAppConfig } from '../contracts';
 import { resolve } from 'path';
+import { getPath } from '../helpers/pathHelper';
 
-const defaultConfigPath = 'data/config.json';
+const defaultConfigPath = 'config.json';
 
 @Injectable()
 export class ConfigService {
@@ -19,7 +20,7 @@ export class ConfigService {
             return this._config;
         }
 
-        const configPath = resolve(process.env.configPath || defaultConfigPath);
+        const configPath = getPath(process.env.configPath || defaultConfigPath);
 
         let configFile: Partial<IAppConfig> = {};
 

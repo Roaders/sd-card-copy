@@ -1,4 +1,8 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
+import { getPath } from './helpers/pathHelper';
+
+config({ path: getPath('.env') });
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { WinstonModule } from 'nest-winston';
