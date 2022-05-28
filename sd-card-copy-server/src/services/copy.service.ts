@@ -8,7 +8,7 @@ import copyProgress, {
 } from 'copy-progress';
 import { filter, last, map } from 'rxjs';
 import { DateStrategies } from '../strategies';
-import { applyTokenReplacementsStrategies } from '../helpers';
+import { applyTokenReplacementsStrategies, printWorkerId } from '../helpers';
 import { ConfigService } from './config.service';
 
 @Injectable()
@@ -20,13 +20,14 @@ export class CopyService {
         this.defaultReplacementStrategies = [dateStrategies.formattedDateStrategy, dateStrategies.timestampStrategy];
     }
 
-    private logger = new Logger(CopyService.name);
+    private logger = new Logger(`${CopyService.name}${printWorkerId()}`);
 
     public async startCopy(params: CopyParams) {
         let strategies = this.replacementStrategies;
 
         if (strategies == null) {
             const config = await this.configService.getConfig();
+            
             strategies = this.replacementStrategies = [
                 ...(config.strategies || []),
                 ...this.defaultReplacementStrategies,
