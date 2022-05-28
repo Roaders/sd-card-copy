@@ -12,11 +12,11 @@ import winston from 'winston';
 import cluster from 'cluster';
 
 async function bootstrap() {
-    const logPath = process.env.logPath || 'data/logs/log.txt';
+    const logPath = process.env.logPath || 'logs/log.txt';
     const transports: winston.transport[] = [];
 
     if (process.env.logType != 'console') {
-        transports.push(new DailyRotateFile({ filename: logPath }));
+        transports.push(new DailyRotateFile({ filename: getPath(logPath) }));
     }
     if (process.env.logType != 'file') {
         transports.push(new winston.transports.Console());
