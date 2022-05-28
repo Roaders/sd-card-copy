@@ -11,6 +11,7 @@ port=3000
 configPath=data/config.json
 logPath=data/logs/log.txt
 logType=both
+clusterLimit=4
 ```
 
 **port**
@@ -32,6 +33,10 @@ Can be `file`. `console` or `both`. Defaults to `both`
 ### Config
 
 By default a json config file is loaded from `data/config.js`.
+
+### clusterLimit
+
+If you want to allow node clustering set a limit for the number of workers. If `clusterLimit` is not set or is less than 2 clustering will not be used.
 
 ```js
 module.exports = {
