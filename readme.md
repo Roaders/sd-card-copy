@@ -57,7 +57,7 @@ Optional. If set provides the default target path when copying so that it does n
 **strategies**
 Custom path replacement strategies can be included in your config. The strategy must be a `TokenReplacementStrategy`:
 
-[//]: # (ts-command-line-args_write-markdown_insertCodeBelow file="sd-card-copy-server\src\contracts.ts" codeComment="typescript" )
+[//]: # (ts-command-line-args_write-markdown_insertCodeBelow file="sd-card-copy-server/src/contracts.ts" codeComment="typescript" )
 ```typescript
 export type TokenReplacementStrategy = (
     tokenName: string, // Given {DATE} will be DATE
@@ -127,7 +127,7 @@ sudo nano /etc/usbmount/makeStartCopyRequest
 
 Copy the following:
 
-[//]: # (ts-command-line-args_write-markdown_insertCodeBelow file="examples\usbMountHook.js" codeComment="js" )
+[//]: # (ts-command-line-args_write-markdown_insertCodeBelow file="examples/usbMountHook.js" codeComment="js" )
 ```js
 #!/usr/bin/env node
 
