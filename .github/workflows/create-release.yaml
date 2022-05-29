@@ -31,7 +31,7 @@ jobs:
         if: ${{ steps.release.outputs.released == 'true' }}
         run: echo Release ID ${{ steps.release.outputs.release_id }} TAG ${{ steps.release.outputs.release_tag }}
 
-      -name: Set up QEMU
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
       - name: Set up Docker Buildx
