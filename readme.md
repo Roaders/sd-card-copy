@@ -8,11 +8,12 @@ The server can be configured with a `.env` file and a json config file. In most 
 
 ```
 port=3000
-configPath=data/config.json
-logPath=data/logs/log.txt
+configPath=config.json
+logPath=logs/log.txt
 logType=both
 clusterLimit=4
 ```
+paths are all relative to the `.env` file which should located in the `data` folder.
 
 **port**
 
@@ -20,23 +21,23 @@ Defaults to `3000`
 
 **configPath**
 
-Defaults to `data/config.json`
+Defaults to `config.json`
 
 **logPath**
 
-Defaults to `data/logs/log.txt`. Logs are rotated daily.
+Defaults to `logs/log.txt`. Logs are rotated daily.
 
 **logType**
 
 Can be `file`. `console` or `both`. Defaults to `both`
 
-### Config
-
-By default a json config file is loaded from `data/config.js`.
-
-### clusterLimit
+**clusterLimit**
 
 If you want to allow node clustering set a limit for the number of workers. If `clusterLimit` is not set or is less than 2 clustering will not be used.
+
+### Config
+
+By default a json config file is loaded from `data/config.json`. This can also be a `js` file.
 
 ```js
 module.exports = {

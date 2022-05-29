@@ -4,7 +4,7 @@
     "description": "Automatically copies SD cards to another folder",
     "main": "index.js",
     "scripts": {
-        "clean": "rimraf dist",
+        "clean": "rimraf dist data/logs",
         "test": "npm test -w sd-card-copy-server",
         "lint": "eslint . --ext .ts,.d.ts,.js",
         "lint:fix": "eslint . --ext .ts,.d.ts,.js --fix",
