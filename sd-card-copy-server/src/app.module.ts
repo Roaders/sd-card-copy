@@ -6,7 +6,6 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from 'nestjs-logging-interceptor';
 import { DateStrategies } from './strategies';
 import { TimestampProvider } from './providers';
-import cluster from "cluster"
 import { printWorkerId } from './helpers';
 
 @Module({

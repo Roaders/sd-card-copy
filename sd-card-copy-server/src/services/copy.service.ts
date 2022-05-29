@@ -27,7 +27,7 @@ export class CopyService {
 
         if (strategies == null) {
             const config = await this.configService.getConfig();
-            
+
             strategies = this.replacementStrategies = [
                 ...(config.strategies || []),
                 ...this.defaultReplacementStrategies,
