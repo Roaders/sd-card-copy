@@ -21,7 +21,13 @@ jobs:
           node-version: '16.x'
 
       - name: Install node modules and verify build
-        run: npm ci && npm run build --if-present && npm test --if-present && npm run lint --if-present
+        run: npm ci && npm run build-release
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Release
         uses: justincy/github-action-npm-release@2.0.2
@@ -30,9 +36,3 @@ jobs:
       - name: Print release output
         if: ${{ steps.release.outputs.released == 'true' }}
         run: echo Release ID ${{ steps.release.outputs.release_id }}
-
-      - name: Publish
-        if: steps.release.outputs.released == 'true'
-        uses: JS-DevTools/npm-publish@v1
-        with:
-          token: ${{ secrets.NPM_TOKEN }}

@@ -6,11 +6,10 @@ ENV NODE_ENV=production
 
 COPY package*.json ./
 COPY sd-card-copy-server/package.json ./sd-card-copy-server/package.json
+COPY dist dist
 
 RUN npm ci
 RUN npm prune --production
-
-COPY dist dist
 
 EXPOSE 3000
 
