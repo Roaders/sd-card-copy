@@ -148,13 +148,28 @@ sudo chmod +x /etc/usbmount/makeStartCopyRequest
 
 ## Docker
 
-Run on Docker:
+the command that you need to run will depend on your setup and specifically what you want to copy to where. I use this command:
 
 ```bash
-$ docker run -it --name sd-card-copy -p 3000:3000 -v /someLocalStorage/data:/usr/src/app/data -v /mnt:/mnt --mount type=bind,source=/media,target=/media,bind-propagation=shared roaders/sd-card-copy:latest
+$ docker run -it -p 3000:3000 -v /someLocalStorage/data:/usr/src/app/data -v /mnt:/mnt --mount type=bind,source=/media,target=/media,bind-propagation=shared --name sd-card-copy roaders/sd-card-copy:latest
 ```
 
-Upgrade:
+#### -it 
+attach a terminal session so we can see what is going on
+#### -p 3000:3000
+connect local port 3000 to the exposed internal port 3000
+#### -v /someLocalStorage/data:/usr/src/app/data
+map a folder to the data folder used in the container so we can configure the instance and store logs
+#### -v /mnt:/mnt
+map the `mnt` folder into the container. This allows me to copy to `/mnt/someFolder`. YOu will need to map and folder you want to copy to.
+#### --mount type=bind,source=/media,target=/media,bind-propagation=shared
+this maps the `media` folder to `media` within the container. This will also map newly mounted usb drives as well
+#### --name sd-card-copy
+name of the container
+#### roaders/sd-card-copy:latest
+the image to base the container on
+
+### Upgrade:
 
 ```bash
 $ docker pull roaders/sd-card-copy:latest
