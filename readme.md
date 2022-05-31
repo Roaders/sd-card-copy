@@ -145,3 +145,20 @@ Make the file executable:
 ```bash
 sudo chmod +x /etc/usbmount/makeStartCopyRequest
 ```
+
+## Docker
+
+Run on Docker:
+
+```bash
+$ docker run -it --name sd-card-copy -p 3000:3000 -v /someLocalStorage/data:/usr/src/app/data -v /mnt:/mnt --mount type=bind,source=/media,target=/media,bind-propagation=shared roaders/sd-card-copy:latest
+```
+
+Upgrade:
+
+```bash
+$ docker pull roaders/sd-card-copy:latest
+$ docker stop sd-card-copy
+$ docker rm sd-card-copy
+$ docker run -it --name sd-card-copy -p 3000:3000 -v /someLocalStorage/data:/usr/src/app/data -v /mnt:/mnt --mount type=bind,source=/media,target=/media,bind-propagation=shared roaders/sd-card-copy:latest
+```
