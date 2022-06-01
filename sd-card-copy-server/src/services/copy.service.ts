@@ -10,6 +10,8 @@ import { filter, last, map } from 'rxjs';
 import { DateStrategies } from '../strategies';
 import { applyTokenReplacementsStrategies, printWorkerId } from '../helpers';
 import { ConfigService } from './config.service';
+import prettyBytes from 'pretty-bytes';
+import ms from 'ms';
 
 @Injectable()
 export class CopyService {
@@ -48,10 +50,13 @@ export class CopyService {
         })
             .pipe(filter(isIFilesProgress), last())
             .subscribe({
-                next: (lastValue) =>
+                next: (lastValue) => {
+                    const bytes = prettyBytes(lastValue.totalBytes);
+                    const time = ms(lastValue.elapsed);
                     this.logger.log(
-                        `Copied ${lastValue.totalFiles} files (${lastValue.totalBytes}b) ${params.sourcePath} -> ${targetPath} in ${lastValue.elapsed}ms`
-                    ),
+                        `Copied ${lastValue.totalFiles} files (${bytes}) ${params.sourcePath} -> ${targetPath} in ${time}`
+                    );
+                },
                 error: (err) => this.logger.error(`ERR: `, err),
             });
     }
