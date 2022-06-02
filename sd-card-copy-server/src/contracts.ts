@@ -1,6 +1,7 @@
 export type CopyParams = {
     sourcePath: string;
     targetPath: string;
+    deleteSource: boolean;
 };
 
 export interface IAppConfig {

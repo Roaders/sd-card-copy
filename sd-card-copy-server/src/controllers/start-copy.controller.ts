@@ -10,8 +10,12 @@ export class CopyPathController {
     constructor(private readonly copyService: CopyService, private readonly configService: ConfigService) {}
 
     @Get()
-    public async copyPath(@Query('source-path') sourcePath?: string, @Query('target-path') targetPath?: string) {
-        const params = await this.sanitiseParams({ sourcePath, targetPath });
+    public async copyPath(
+        @Query('source-path') sourcePath?: string,
+        @Query('target-path') targetPath?: string,
+        @Query('delete-source') deleteSource?: string
+    ) {
+        const params = await this.sanitiseParams({ sourcePath, targetPath, deleteSource: deleteSource === 'true' });
         return this.copyService.startCopy(params);
     }
 
@@ -30,6 +34,8 @@ export class CopyPathController {
             throw new HttpException(message, HttpStatus.BAD_REQUEST);
         }
 
-        return { sourcePath, targetPath };
+        const deleteSource = params.deleteSource ?? false;
+
+        return { sourcePath, targetPath, deleteSource };
     }
 }
