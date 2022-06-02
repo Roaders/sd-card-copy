@@ -8,7 +8,7 @@ import { AppModule } from './app.module';
 import { WinstonModule } from 'nest-winston';
 import { cpus } from 'os';
 import DailyRotateFile from 'winston-daily-rotate-file';
-import winston from 'winston';
+import winston, { format } from 'winston';
 import cluster from 'cluster';
 
 async function bootstrap() {
@@ -23,7 +23,10 @@ async function bootstrap() {
     }
 
     const clusterLimit = process.env.clusterLimit != null ? parseInt(process.env.clusterLimit) : NaN;
-    const logger = WinstonModule.createLogger({ transports });
+    const logger = WinstonModule.createLogger({
+        transports,
+        format: format.combine(format.timestamp(), format.json()),
+    });
 
     if (cluster.isPrimary && !isNaN(clusterLimit) && clusterLimit > 1) {
         const nodeCount = Math.min(cpus().length, clusterLimit);
