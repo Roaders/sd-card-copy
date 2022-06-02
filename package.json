@@ -1,6 +1,6 @@
 {
     "name": "sd-card-copy",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Automatically copies SD cards to another folder",
     "main": "index.js",
     "scripts": {
