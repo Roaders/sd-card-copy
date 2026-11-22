@@ -124,10 +124,10 @@ journalctl -u 'usbmount*' -f
 
 **Start Copy**
 
-`usbmount` can kick off a copy operation by making a request to our server when a drive is inserted:
+`usbmount` can kick off a copy operation by making a request to our server when a drive is inserted. It runs every executable file in `/etc/usbmount/mount.d` after mounting a drive (file names must not contain a `.`):
 
 ```bash
-sudo nano /etc/usbmount/makeStartCopyRequest
+sudo nano /etc/usbmount/mount.d/makeStartCopyRequest
 ```
 
 Copy the following:
@@ -148,7 +148,7 @@ makeRequest();
 [//]: # (ts-command-line-args_write-markdown_insertCodeAbove)
 Make the file executable:
 ```bash
-sudo chmod +x /etc/usbmount/makeStartCopyRequest
+sudo chmod +x /etc/usbmount/mount.d/makeStartCopyRequest
 ```
 
 ## Docker
