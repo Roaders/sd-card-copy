@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
 import { CopyParams, TokenReplacementStrategy } from '../contracts';
 import copyProgress, { mapFileStats, streamScanPathResults, isIFilesProgress } from 'copy-progress';
 import { filter, last, map } from 'rxjs';
@@ -65,7 +65,19 @@ export class CopyService {
             ];
         }
 
-        const targetPath = await applyTokenReplacementsStrategies(params.targetPath, params.sourcePath, strategies);
+        const unresolvedTokens: string[] = [];
+        const targetPath = await applyTokenReplacementsStrategies(
+            params.targetPath,
+            params.sourcePath,
+            strategies,
+            (token) => unresolvedTokens.push(token)
+        );
+
+        if (unresolvedTokens.length > 0) {
+            const message = `Not copying ${params.sourcePath}: no strategy could replace ${unresolvedTokens.join(', ')} in '${params.targetPath}'`;
+            this.logger.warn(message);
+            throw new UnprocessableEntityException(message);
+        }
 
         this.logger.log(`Copying ${params.sourcePath} -> ${targetPath} (delete-source: ${params.deleteSource})`);
 

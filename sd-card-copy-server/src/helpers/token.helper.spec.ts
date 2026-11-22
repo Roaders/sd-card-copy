@@ -127,6 +127,20 @@ describe(`token helper`, () => {
                 });
             }
         );
+
+        it(`should report only the tokens that no strategy replaced`, async () => {
+            const unresolved: string[] = [];
+
+            const result = await applyTokenReplacementsStrategies(
+                `out/{KNOWN}/{UNKNOWN}/{OTHER arg}`,
+                sourcePath,
+                [(token) => (token === 'KNOWN' ? 'known' : undefined)],
+                (token) => unresolved.push(token)
+            );
+
+            expect(result).toEqual(`out/known/{UNKNOWN}/{OTHER arg}`);
+            expect(unresolved).toEqual(['{UNKNOWN}', '{OTHER arg}']);
+        });
     });
 
     describe(`tokenStringSplit`, () => {

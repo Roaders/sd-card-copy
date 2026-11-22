@@ -7,7 +7,8 @@ const escapeCharacter = '\\';
 export async function applyTokenReplacementsStrategies(
     targetPath: string,
     sourcePath: string,
-    strategies: TokenReplacementStrategy[]
+    strategies: TokenReplacementStrategy[],
+    onUnresolvedToken?: (token: string) => void
 ): Promise<string> {
     return replaceTokens(targetPath, async (token) => {
         const parts = getTokenParts(token);
@@ -24,6 +25,7 @@ export async function applyTokenReplacementsStrategies(
             }
         }
 
+        onUnresolvedToken?.(token);
         return token;
     });
 }
