@@ -103,6 +103,6 @@ async function getGarminDevice(sourcePath: string) {
     return device;
 }
 
-function isTextNode(input: unknown): input is Element & { text: string } {
-    return true;
+function isTextNode(input: Element): input is Element & { text: string } {
+    return input.type === 'text' && typeof input.text === 'string';
 }
