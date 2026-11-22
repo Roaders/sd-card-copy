@@ -42,9 +42,14 @@ By default a json config file is loaded from `data/config.json`. This can also b
 ```js
 module.exports = {
     targetPath: "C:/video/{DATE yyyy}/{DATE MMM}",
+    allowedSourcePaths: ["/media"],
     strategies: [(token) => (token === 'MY_TOKEN' ? 'REPLACED_CONTENT' : undefined)],
 }
 ```
+
+**allowedSourcePaths**
+
+Optional but recommended. A list of folders that `source-path` must be in (or equal to). Requests for any other `source-path` are rejected with a `400`. As copying can delete the source this stops a request from emptying anything other than your SD card mounts. If not set any `source-path` is allowed.
 
 **targetPath**
 
@@ -134,7 +139,7 @@ Copy the following:
 const http = require('http');
 
 async function makeRequest() {
-    await http.get(`http://localhost:3000/copy-path?source-path=${process.env.UM_MOUNTPOINT}`);
+    await http.get(`http://127.0.0.1:3000/copy-path?source-path=${process.env.UM_MOUNTPOINT}`);
 }
 
 makeRequest();
@@ -151,13 +156,13 @@ sudo chmod +x /etc/usbmount/makeStartCopyRequest
 the command that you need to run will depend on your setup and specifically what you want to copy to where. I use this command:
 
 ```bash
-$ docker run -it -p 3000:3000 -v /someLocalStorage/data:/usr/src/app/data -v /mnt:/mnt --mount type=bind,source=/media,target=/media,bind-propagation=shared --name sd-card-copy roaders/sd-card-copy:latest
+$ docker run -it -p 127.0.0.1:3000:3000 -v /someLocalStorage/data:/usr/src/app/data -v /mnt:/mnt --mount type=bind,source=/media,target=/media,bind-propagation=shared --name sd-card-copy roaders/sd-card-copy:latest
 ```
 
 #### -it 
 attach a terminal session so we can see what is going on
-#### -p 3000:3000
-connect local port 3000 to the exposed internal port 3000
+#### -p 127.0.0.1:3000:3000
+connect local port 3000 to the exposed internal port 3000. Binding to `127.0.0.1` means only the machine itself (and so the `usbmount` hook) can make requests. The server has no authentication and can delete files so only use `-p 3000:3000` if you need to make requests from other machines.
 #### -v /someLocalStorage/data:/usr/src/app/data
 map a folder to the data folder used in the container so we can configure the instance and store logs
 #### -v /mnt:/mnt
@@ -175,5 +180,5 @@ the image to base the container on
 $ docker pull roaders/sd-card-copy:latest
 $ docker stop sd-card-copy
 $ docker rm sd-card-copy
-$ docker run -it --name sd-card-copy -p 3000:3000 -v /someLocalStorage/data:/usr/src/app/data -v /mnt:/mnt --mount type=bind,source=/media,target=/media,bind-propagation=shared roaders/sd-card-copy:latest
+$ docker run -it --name sd-card-copy -p 127.0.0.1:3000:3000 -v /someLocalStorage/data:/usr/src/app/data -v /mnt:/mnt --mount type=bind,source=/media,target=/media,bind-propagation=shared roaders/sd-card-copy:latest
 ```

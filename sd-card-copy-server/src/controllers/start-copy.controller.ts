@@ -1,5 +1,6 @@
 import { Controller, Get, HttpException, HttpStatus, Logger, Query } from '@nestjs/common';
 import { CopyParams } from '../contracts';
+import { isWithinPaths } from '../helpers';
 import { ConfigService } from '../services';
 import { CopyService } from '../services/copy.service';
 
@@ -25,7 +26,15 @@ export class CopyPathController {
             throw new HttpException('source-path must be provided as a query param', HttpStatus.BAD_REQUEST);
         }
 
-        const targetPath = params.targetPath || (await this.configService.getConfig()).targetPath;
+        const config = await this.configService.getConfig();
+
+        if (config.allowedSourcePaths != null && !isWithinPaths(sourcePath, config.allowedSourcePaths)) {
+            const message = `source-path '${sourcePath}' is not within allowedSourcePaths`;
+            this.logger.warn(message);
+            throw new HttpException(message, HttpStatus.BAD_REQUEST);
+        }
+
+        const targetPath = params.targetPath || config.targetPath;
 
         if (targetPath == null) {
             const message =

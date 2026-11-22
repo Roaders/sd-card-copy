@@ -6,6 +6,7 @@ export type CopyParams = {
 
 export interface IAppConfig {
     targetPath?: string;
+    allowedSourcePaths?: string[];
     strategies?: TokenReplacementStrategy[];
 }
 
