@@ -13,7 +13,14 @@ export interface IAppConfig {
     targetPath?: string;
     allowedSourcePaths?: string[];
     strategies?: TokenReplacementStrategy[];
+    afterCopy?: AfterCopyAction[];
 }
+
+/**
+ * Called after each copy request has finished: copied (and deleted), failed or refused (e.g. unresolved tokens).
+ * getActiveSourcePaths returns the source paths of the copies running at the time it is called.
+ */
+export type AfterCopyAction = (params: CopyParams, getActiveSourcePaths: () => string[]) => void | Promise<void>;
 
 // ts-command-line-args_write-markdown_copyCodeBelow
 export type TokenReplacementStrategy = (

@@ -4,6 +4,9 @@ WORKDIR /usr/src/app
 
 ENV NODE_ENV=production
 
+# used by the Insta360 power cycle afterCopy action
+RUN apk add --no-cache uhubctl
+
 COPY package*.json ./
 COPY sd-card-copy-server/package.json ./sd-card-copy-server/package.json
 COPY dist dist

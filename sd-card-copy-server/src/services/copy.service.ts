@@ -43,10 +43,27 @@ export class CopyService {
         this.activeSourcePaths.add(sourcePath);
 
         try {
-            await this.copy(params, () => this.activeSourcePaths.delete(sourcePath));
+            await this.copy(params, () => this.onCopyComplete(sourcePath, params));
         } catch (err) {
-            this.activeSourcePaths.delete(sourcePath);
+            this.onCopyComplete(sourcePath, params);
             throw err;
+        }
+    }
+
+    private onCopyComplete(sourcePath: string, params: CopyParams) {
+        this.activeSourcePaths.delete(sourcePath);
+        this.runAfterCopyActions(params);
+    }
+
+    private async runAfterCopyActions(params: CopyParams) {
+        const { afterCopy = [] } = await this.configService.getConfig();
+
+        for (const action of afterCopy) {
+            try {
+                await action(params, () => [...this.activeSourcePaths]);
+            } catch (err) {
+                this.logger.error(`afterCopy action for '${params.sourcePath}' failed: ${err}`);
+            }
         }
     }
 
@@ -83,7 +100,13 @@ export class CopyService {
 
         const filesStream = streamScanPathResults(params.sourcePath).pipe(
             filter((result) => result.stats.isFile()),
-            map((file) => mapFileStats({ file, outDir: targetPath, sourceDir: params.sourcePath }))
+            map((file) =>
+                mapFileStats({
+                    file,
+                    outDir: targetPath,
+                    sourceDir: params.sourcePath,
+                })
+            )
         );
 
         // not copy-progress's configureFileCopyProgressFunction: it leaves read stream errors unhandled, which crashes the process

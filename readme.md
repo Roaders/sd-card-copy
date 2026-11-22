@@ -88,6 +88,29 @@ module.exports = {
   * `{GARMIN_DEVICE_NAME}`, `{GARMIN_DEVICE_ID}`, `{GARMIN_MODEL_NAME}` - from `Garmin/GarminDevice.xml`
   * `{INSTA360_MODEL}`, `{INSTA360_SERIAL}` - from `DCIM/fileinfo_list.list` (tested with an X6)
 
+**afterCopy**
+
+Optional. Functions called after each copy request has finished, whether it copied, failed or was refused, with its `CopyParams` and a function returning the source paths of the copies still running.
+
+`insta360PowerCycle` turns off the USB power to an Insta360 camera once its drives have been dealt with (`delete-source=true`), so that it leaves file transfer mode and goes to sleep. This happens whether the drives were copied, had nothing to copy, failed or were refused. Ejecting the drives is not enough: the camera stays awake while it has USB power. It waits a minute after a drive finishes so the camera's other drive has been requested, and until that drive has finished too. After `offMinutes` (default 5) the power is turned back on so the camera charges. Set the camera's auto power off to less than `offMinutes`. Copies from other ports carry on.
+
+```js
+module.exports = {
+    // ...
+    afterCopy: [insta360.insta360PowerCycle({ offMinutes: 5 })],
+};
+```
+
+This uses [uhubctl](https://github.com/mvp/uhubctl), so the camera must be plugged into a hub that can switch the power of each port (most hubs can't, check the list of compatible hubs). The container needs access to the USB devices, and write access to `/sys/devices` so it can de-authorise the camera first (otherwise Linux kernels before 6.0 turn the port's power straight back on):
+
+```yaml
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
+      - /sys/devices:/sys/devices
+    device_cgroup_rules:
+      - 'c 189:* rmw'
+```
+
 ## usbmount
 
 [Usbmount](https://github.com/rbrito/usbmount) is a tool to automatically mount any usb drive that's inserted. I had some issues getting it to work on my raspberry pi though so I'll record the steps here (mostly so that when I forget in a months time I've documented it!).
