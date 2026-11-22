@@ -1,0 +1,13 @@
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+    test: {
+        root: 'src',
+        include: ['**/*.spec.ts'],
+        globals: true,
+        environment: 'node',
+        coverage: {
+            reportsDirectory: '../coverage',
+        },
+    },
+});

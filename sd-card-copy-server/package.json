@@ -15,11 +15,10 @@
         "prestart:prod": "npm run build",
         "start:prod": "node ../dist/server/main",
         "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-        "test": "node --experimental-vm-modules --disable-warning=ExperimentalWarning ../node_modules/jest/bin/jest.js",
-        "test:watch": "node --experimental-vm-modules --disable-warning=ExperimentalWarning ../node_modules/jest/bin/jest.js --watch",
-        "test:cov": "node --experimental-vm-modules --disable-warning=ExperimentalWarning ../node_modules/jest/bin/jest.js --coverage",
-        "test:debug": "node --inspect-brk --experimental-vm-modules ../node_modules/jest/bin/jest.js --runInBand",
-        "test:e2e": "jest --config ./test/jest-e2e.json"
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:cov": "vitest run --coverage",
+        "test:debug": "vitest run --inspect-brk --no-file-parallelism"
     },
     "dependencies": {
         "@nestjs/common": "^12.6.0",
@@ -38,22 +37,5 @@
         "winston": "^3.19.0",
         "winston-daily-rotate-file": "^5.0.0",
         "xml-js": "^1.6.11"
-    },
-    "jest": {
-        "moduleFileExtensions": [
-            "js",
-            "json",
-            "ts"
-        ],
-        "rootDir": "src",
-        "testRegex": ".*\\.spec\\.ts$",
-        "transform": {
-            "^.+\\.(t|j)s$": "ts-jest"
-        },
-        "collectCoverageFrom": [
-            "**/*.(t|j)s"
-        ],
-        "coverageDirectory": "../coverage",
-        "testEnvironment": "node"
     }
 }

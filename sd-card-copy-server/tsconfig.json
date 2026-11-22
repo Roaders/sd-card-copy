@@ -10,11 +10,12 @@
         "sourceMap": true,
         "rootDir": "./src",
         "outDir": "../dist/server",
-        "types": ["node", "jest"],
+        "types": ["node", "vitest/globals"],
         "incremental": true,
         "strict": true,
         "forceConsistentCasingInFileNames": true,
         "noFallthroughCasesInSwitch": true,
         "esModuleInterop": true
-    }
+    },
+    "include": ["src"]
 }
