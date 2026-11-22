@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { IAppConfig } from '../contracts';
-import { resolve } from 'path';
 import { getPath } from '../helpers';
 
 const defaultConfigPath = 'config.json';
@@ -29,7 +28,7 @@ export class ConfigService {
                 configFile = await import(configPath);
                 this.logger.log(`Config loaded from '${configPath}'`);
             } catch (e) {
-                if (configPath != resolve(defaultConfigPath)) {
+                if (configPath != getPath(defaultConfigPath)) {
                     this.logger.warn(
                         `Could not load config file from '${configPath}'. Continuing with default config. ${e}`
                     );
