@@ -1,11 +1,6 @@
 import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { CopyParams, TokenReplacementStrategy } from '../contracts';
-import copyProgress, {
-    configureFileCopyProgressFunction,
-    mapFileStats,
-    streamScanPathResults,
-    isIFilesProgress,
-} from 'copy-progress';
+import copyProgress, { mapFileStats, streamScanPathResults, isIFilesProgress } from 'copy-progress';
 import { filter, last, map } from 'rxjs';
 import { DateStrategies } from '../strategies';
 import { applyTokenReplacementsStrategies } from '../helpers';
@@ -13,6 +8,8 @@ import { ConfigService } from './config.service';
 import prettyBytes from 'pretty-bytes';
 import ms from 'ms';
 import { readdir, rm } from 'fs/promises';
+import { createReadStream, createWriteStream } from 'fs';
+import { pipeline } from 'stream/promises';
 import { join, resolve } from 'path';
 
 @Injectable()
@@ -74,13 +71,19 @@ export class CopyService {
             map((file) => mapFileStats({ file, outDir: targetPath, sourceDir: params.sourcePath }))
         );
 
-        copyProgress(filesStream, {
-            concurrentCopy: 1,
-            copyFunction: configureFileCopyProgressFunction({ force: true, highWaterMark: 1024 * 1024 }),
-        })
-            .pipe(filter(isIFilesProgress), last())
+        // not copy-progress's configureFileCopyProgressFunction: it leaves read stream errors unhandled, which crashes the process
+        const copyFunction = (source: string, destination: string) =>
+            pipeline(createReadStream(source, { highWaterMark: 1024 * 1024 }), createWriteStream(destination));
+
+        copyProgress(filesStream, { concurrentCopy: 1, copyFunction })
+            .pipe(filter(isIFilesProgress), last(null, undefined))
             .subscribe({
                 next: (lastValue) => {
+                    if (lastValue == null) {
+                        this.logger.log(`No files to copy in ${params.sourcePath}`);
+                        onComplete();
+                        return;
+                    }
                     const bytes = prettyBytes(lastValue.totalBytes);
                     const time = ms(lastValue.elapsed);
                     this.logger.log(
@@ -91,7 +94,7 @@ export class CopyService {
                         .finally(onComplete);
                 },
                 error: (err) => {
-                    this.logger.error(`ERR: `, err);
+                    this.logger.error(`Copy ${params.sourcePath} -> ${targetPath} failed: ${err}`);
                     onComplete();
                 },
             });
