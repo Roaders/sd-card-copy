@@ -7,7 +7,7 @@ import {
     GARMIN_MODEL_NAME_TOKEN,
 } from './garmin.strategy';
 import { join } from 'path';
-import { TokenReplacementStrategy } from '../contracts';
+import { CAMERA_NAME_TOKEN, TokenReplacementStrategy } from '../contracts';
 
 describe(`garmin.strategy`, () => {
     const tests: { strategy: TokenReplacementStrategy; token: string; source: string; expected: string | undefined }[] =
@@ -15,6 +15,9 @@ describe(`garmin.strategy`, () => {
             { strategy: garminDeviceName, token: 'incorrectToken', source: `deviceOne`, expected: undefined },
             { strategy: garminDeviceName, token: GARMIN_DEVICE_NAME_TOKEN, source: `deviceOne`, expected: 'VIRB360' },
             { strategy: garminDeviceName, token: GARMIN_DEVICE_NAME_TOKEN, source: `deviceTwo`, expected: 'Ultra' },
+            { strategy: garminDeviceName, token: CAMERA_NAME_TOKEN, source: `deviceOne`, expected: 'VIRB360' },
+            { strategy: garminDeviceName, token: CAMERA_NAME_TOKEN, source: `deviceTwo`, expected: 'Ultra' },
+            { strategy: garminDeviceName, token: CAMERA_NAME_TOKEN, source: `insta360X6`, expected: undefined },
             { strategy: garminDeviceId, token: 'incorrectToken', source: `deviceOne`, expected: undefined },
             { strategy: garminDeviceId, token: GARMIN_DEVICE_ID_TOKEN, source: `deviceOne`, expected: '9876543' },
             { strategy: garminDeviceId, token: GARMIN_DEVICE_ID_TOKEN, source: `deviceTwo`, expected: '12345678' },

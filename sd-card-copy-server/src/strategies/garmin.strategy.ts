@@ -1,4 +1,4 @@
-import { TokenReplacementStrategy } from '../contracts';
+import { CAMERA_NAME_TOKEN, TokenReplacementStrategy } from '../contracts';
 import { xml2js, Element } from 'xml-js';
 import { readFile } from 'fs/promises';
 import { resolve } from 'path';
@@ -16,7 +16,7 @@ export const garminDeviceName: TokenReplacementStrategy = async (
     _target: string,
     sourcePath: string
 ) => {
-    if (token !== GARMIN_DEVICE_NAME_TOKEN) {
+    if (token !== GARMIN_DEVICE_NAME_TOKEN && token !== CAMERA_NAME_TOKEN) {
         return undefined;
     }
 

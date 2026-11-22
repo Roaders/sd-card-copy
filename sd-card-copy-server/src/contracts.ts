@@ -4,6 +4,11 @@ export type CopyParams = {
     deleteSource: boolean;
 };
 
+/**
+ * Token for a folder name unique to the camera, answered by each camera strategy that recognises the card
+ */
+export const CAMERA_NAME_TOKEN = 'CAMERA_NAME';
+
 export interface IAppConfig {
     targetPath?: string;
     allowedSourcePaths?: string[];

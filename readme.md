@@ -70,6 +70,24 @@ export type TokenReplacementStrategy = (
 [//]: # (ts-command-line-args_write-markdown_insertCodeAbove)
 example strategies can be seen at `sd-card-copy-server\src\strategies`
 
+**Camera strategies**
+
+The camera strategies read details from the card being copied. Add them to `strategies` in a `js` config file:
+
+```js
+const garmin = require('../dist/server/strategies/garmin.strategy.js');
+const insta360 = require('../dist/server/strategies/insta360.strategy.js');
+
+module.exports = {
+    targetPath: '/mnt/videos/{DATE yyyy_MM_dd}/{CAMERA_NAME}',
+    strategies: [garmin.garminDeviceName, garmin.garminDeviceId, garmin.garminModelName, insta360.insta360Camera],
+};
+```
+
+  * `{CAMERA_NAME}` - a folder name unique to the camera: the name set on a Garmin camera, or model and serial number for an Insta360 (e.g. `Insta360_X6_ABC123DEF45678`)
+  * `{GARMIN_DEVICE_NAME}`, `{GARMIN_DEVICE_ID}`, `{GARMIN_MODEL_NAME}` - from `Garmin/GarminDevice.xml`
+  * `{INSTA360_MODEL}`, `{INSTA360_SERIAL}` - from `DCIM/fileinfo_list.list` (tested with an X6)
+
 ## usbmount
 
 [Usbmount](https://github.com/rbrito/usbmount) is a tool to automatically mount any usb drive that's inserted. I had some issues getting it to work on my raspberry pi though so I'll record the steps here (mostly so that when I forget in a months time I've documented it!).
