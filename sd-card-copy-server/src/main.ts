@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
-import { getPath } from 'helpers';
+import { getPath } from './helpers';
 
-config({ path: getPath('.env') });
+config({ path: getPath('.env'), quiet: true });
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';

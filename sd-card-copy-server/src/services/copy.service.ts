@@ -17,7 +17,10 @@ export class CopyService {
     private readonly defaultReplacementStrategies: TokenReplacementStrategy[];
     private replacementStrategies: TokenReplacementStrategy[] | undefined;
 
-    constructor(dateStrategies: DateStrategies, private configService: ConfigService) {
+    constructor(
+        dateStrategies: DateStrategies,
+        private configService: ConfigService
+    ) {
         this.defaultReplacementStrategies = [dateStrategies.formattedDateStrategy, dateStrategies.timestampStrategy];
     }
 

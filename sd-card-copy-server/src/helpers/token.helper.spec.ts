@@ -1,4 +1,3 @@
-/* eslint-disable no-useless-escape */
 import { TokenReplacementStrategy } from '../contracts';
 import { applyTokenReplacementsStrategies, getTokenParts, replaceTokens } from './token.helper';
 import { IMocked, Mock, setupFunction } from '@morgan-stanley/ts-mocking-bird';

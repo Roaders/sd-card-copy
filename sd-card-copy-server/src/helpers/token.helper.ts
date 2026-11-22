@@ -1,6 +1,5 @@
 import { TokenReplacementStrategy } from '../contracts';
 
-/* eslint-disable no-case-declarations */
 const tokenStart = '{';
 const tokenEnd = '}';
 const escapeCharacter = '\\';

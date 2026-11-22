@@ -1,4 +1,4 @@
-FROM node:16-alpine
+FROM node:24-alpine
 
 WORKDIR /usr/src/app
 
@@ -8,8 +8,7 @@ COPY package*.json ./
 COPY sd-card-copy-server/package.json ./sd-card-copy-server/package.json
 COPY dist dist
 
-RUN npm ci
-RUN npm prune --production
+RUN npm ci --omit=dev
 
 EXPOSE 3000
 

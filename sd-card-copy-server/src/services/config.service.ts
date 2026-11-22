@@ -25,7 +25,9 @@ export class ConfigService {
 
         if (configPath != null) {
             try {
-                configFile = await import(configPath);
+                // require rather than import(): it resolves extensionless paths (configPath=config) and loads .json
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
+                configFile = require(configPath);
                 this.logger.log(`Config loaded from '${configPath}'`);
             } catch (e) {
                 if (configPath != getPath(defaultConfigPath)) {

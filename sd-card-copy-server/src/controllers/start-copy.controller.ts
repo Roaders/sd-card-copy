@@ -8,7 +8,10 @@ import { CopyService } from '../services/copy.service';
 export class CopyPathController {
     private logger = new Logger(CopyPathController.name);
 
-    constructor(private readonly copyService: CopyService, private readonly configService: ConfigService) {}
+    constructor(
+        private readonly copyService: CopyService,
+        private readonly configService: ConfigService
+    ) {}
 
     @Get()
     public async copyPath(
