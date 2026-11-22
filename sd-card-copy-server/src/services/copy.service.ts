@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { CopyParams, TokenReplacementStrategy } from '../contracts';
 import copyProgress, {
     configureFileCopyProgressFunction,
@@ -8,12 +8,12 @@ import copyProgress, {
 } from 'copy-progress';
 import { filter, last, map } from 'rxjs';
 import { DateStrategies } from '../strategies';
-import { applyTokenReplacementsStrategies, printWorkerId } from '../helpers';
+import { applyTokenReplacementsStrategies } from '../helpers';
 import { ConfigService } from './config.service';
 import prettyBytes from 'pretty-bytes';
 import ms from 'ms';
 import { readdir, rm } from 'fs/promises';
-import { join } from 'path';
+import { join, resolve } from 'path';
 
 @Injectable()
 export class CopyService {
@@ -24,9 +24,36 @@ export class CopyService {
         this.defaultReplacementStrategies = [dateStrategies.formattedDateStrategy, dateStrategies.timestampStrategy];
     }
 
-    private logger = new Logger(printWorkerId(CopyService.name));
+    private logger = new Logger(CopyService.name);
+
+    /**
+     * resolved source paths that are being copied or deleted
+     */
+    private readonly activeSourcePaths = new Set<string>();
 
     public async startCopy(params: CopyParams) {
+        const sourcePath = resolve(params.sourcePath);
+
+        if (this.activeSourcePaths.has(sourcePath)) {
+            const message = `A copy from '${params.sourcePath}' is already in progress`;
+            this.logger.warn(message);
+            throw new ConflictException(message);
+        }
+
+        this.activeSourcePaths.add(sourcePath);
+
+        try {
+            await this.copy(params, () => this.activeSourcePaths.delete(sourcePath));
+        } catch (err) {
+            this.activeSourcePaths.delete(sourcePath);
+            throw err;
+        }
+    }
+
+    /**
+     * Starts the copy and resolves once it has started. onComplete is called once the copy and any delete have finished or failed.
+     */
+    private async copy(params: CopyParams, onComplete: () => void) {
         let strategies = this.replacementStrategies;
 
         if (strategies == null) {
@@ -59,11 +86,14 @@ export class CopyService {
                     this.logger.log(
                         `Copied ${lastValue.totalFiles} files (${bytes}) ${params.sourcePath} -> ${targetPath} in ${time}`
                     );
-                    this.deleteContent(params).catch((err) =>
-                        this.logger.error(`Delete of '${params.sourcePath}' failed: ${err}`)
-                    );
+                    this.deleteContent(params)
+                        .catch((err) => this.logger.error(`Delete of '${params.sourcePath}' failed: ${err}`))
+                        .finally(onComplete);
                 },
-                error: (err) => this.logger.error(`ERR: `, err),
+                error: (err) => {
+                    this.logger.error(`ERR: `, err);
+                    onComplete();
+                },
             });
     }
 

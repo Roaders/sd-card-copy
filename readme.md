@@ -11,7 +11,6 @@ port=3000
 configPath=config.json
 logPath=logs/log.txt
 logType=both
-clusterLimit=4
 ```
 paths are all relative to the `.env` file which should located in the `data` folder.
 
@@ -30,10 +29,6 @@ Defaults to `logs/log.txt`. Logs are rotated daily.
 **logType**
 
 Can be `file`. `console` or `both`. Defaults to `both`
-
-**clusterLimit**
-
-If you want to allow node clustering set a limit for the number of workers. If `clusterLimit` is not set or is less than 2 clustering will not be used.
 
 ### Config
 
