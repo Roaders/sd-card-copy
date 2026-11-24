@@ -1,5 +1,41 @@
 # sd-card-copy
 
+Copies SD cards and cameras to another folder, such as a NAS share, as soon as they are plugged in. It runs in Docker on a Raspberry Pi: [usbmount](#usbmount) mounts each drive and asks the server to copy it.
+
+  * **Folders per camera and date** - the target path can include the date and details read from the card, such as the name set on a Garmin VIRB or the model and serial number of an Insta360 ([camera strategies](#config)).
+  * **Nothing is overwritten** - every copy goes into a new folder. A drive is not copied at all if a token in the target path can't be filled in, for example a card from an unknown camera.
+  * **Optionally empties the card** once it has been copied (`delete-source=true`).
+  * **Puts an Insta360 camera to sleep** after copying by switching off its USB port, then back on so it charges ([afterCopy](#config)).
+  * **Status page** - copies in progress with each file's progress and speed, the last 100 finished, and the server's logs ([status page](#status-page)).
+
+![Status page](docs/status-page.png)
+
+## Copy requests
+
+```
+GET http://127.0.0.1:3000/copy-path?source-path=/media/usb0&delete-source=true
+```
+
+  * `source-path` - the folder to copy, usually the drive's mount point
+  * `target-path` - optional if `targetPath` is set in the config
+  * `delete-source` - `true` to delete everything on the drive once it has been copied
+
+The copy runs in the background: the request returns once it has started. It returns `400` for a `source-path` outside `allowedSourcePaths`, `409` if that drive is already being copied, and `422` if a token in the target path can't be filled in, in which case nothing is copied or deleted.
+
+## Status page
+
+Served on `statusPort` (default `3001`), e.g. `http://<pi address>:3001`. Each drive copied is a session:
+
+  * **In progress** - each file with its size and progress, and the speed of the file being copied. The total speed of every copy is at the top.
+  * **Finished** - the last 10 sessions, with **More** to see older ones. Sessions that failed or were not copied show why. The last 100 sessions are kept in memory and lost when the server restarts.
+  * **Logs** - opens a panel with the server's last 500 log entries, updating as new ones are written.
+
+The status port only serves the page and the read only API it uses, so unlike `port` it can be reached from other machines:
+
+  * `GET /api/status` - server-sent events with the sessions in progress and the total speed, every second
+  * `GET /api/sessions/completed?offset=0&limit=10` - finished sessions, newest first
+  * `GET /api/logs` - server-sent events with the last 500 log entries, then each new one
+
 ## Server Configuration
 
 The server can be configured with a `.env` file and a json config file. In most cases the default `.env` file can be used and most config can be done in the json file.
@@ -194,6 +230,44 @@ sudo chmod +x /etc/usbmount/mount.d/makeStartCopyRequest
 
 ## Docker
 
+### docker compose
+
+This is how I run it on a Raspberry Pi, copying to a NAS share mounted at `/mnt/ringVideos`:
+
+```yaml
+services:
+  sd-card-copy:
+    container_name: sd-card-copy
+    image: roaders/sd-card-copy:latest
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /mnt
+        target: /mnt
+        bind:
+          propagation: rslave # sees the NAS share even if it is mounted after the container starts
+      - /home/pi/docker/sd-card-copy/data:/usr/src/app/data
+      - type: bind
+        source: /media
+        target: /media
+        bind:
+          propagation: shared # sees drives mounted by usbmount
+      # only needed for insta360PowerCycle
+      - /dev/bus/usb:/dev/bus/usb
+      - /sys/devices:/sys/devices
+    device_cgroup_rules:
+      - 'c 189:* rmw' # only needed for insta360PowerCycle
+    ports:
+      - 127.0.0.1:3000:3000 # copy requests, from this machine only
+      - 3001:3001 # status page
+    environment:
+      - TZ=Europe/London
+```
+
+Upgrade with `docker compose pull && docker compose up -d`.
+
+### docker run
+
 the command that you need to run will depend on your setup and specifically what you want to copy to where. I use this command:
 
 ```bash
@@ -224,4 +298,15 @@ $ docker pull roaders/sd-card-copy:latest
 $ docker stop sd-card-copy
 $ docker rm sd-card-copy
 $ docker run -it --name sd-card-copy -p 127.0.0.1:3000:3000 -p 3001:3001 -v /someLocalStorage/data:/usr/src/app/data -v /mnt:/mnt --mount type=bind,source=/media,target=/media,bind-propagation=shared roaders/sd-card-copy:latest
+```
+
+## Development
+
+The repository has two npm workspaces: `sd-card-copy-server` (NestJS) and `sd-card-copy-ui` (the status page, using Lit and Vite). Both build into `dist`, which the Docker image runs.
+
+```bash
+npm install
+npm start                       # server, rebuilding on changes
+npm start -w sd-card-copy-ui    # status page on Vite's dev server, using the server running on this machine
+npm run verify-release          # lint, build, test and check this readme is up to date
 ```
