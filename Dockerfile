@@ -13,7 +13,7 @@ COPY dist dist
 
 RUN npm ci --omit=dev
 
-EXPOSE 3000
+EXPOSE 3000 3001
 
 WORKDIR sd-card-copy-server
 

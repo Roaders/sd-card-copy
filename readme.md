@@ -8,6 +8,7 @@ The server can be configured with a `.env` file and a json config file. In most 
 
 ```
 port=3000
+statusPort=3001
 configPath=config.json
 logPath=logs/log.txt
 logType=both
@@ -17,6 +18,10 @@ paths are all relative to the `.env` file which should located in the `data` fol
 **port**
 
 Defaults to `3000`
+
+**statusPort**
+
+Defaults to `3001`. Serves the status page, which shows the copies in progress and the last 100 finished, and nothing else, so unlike `port` it can be opened to other machines.
 
 **configPath**
 
@@ -192,13 +197,15 @@ sudo chmod +x /etc/usbmount/mount.d/makeStartCopyRequest
 the command that you need to run will depend on your setup and specifically what you want to copy to where. I use this command:
 
 ```bash
-$ docker run -it -p 127.0.0.1:3000:3000 -v /someLocalStorage/data:/usr/src/app/data -v /mnt:/mnt --mount type=bind,source=/media,target=/media,bind-propagation=shared --name sd-card-copy roaders/sd-card-copy:latest
+$ docker run -it -p 127.0.0.1:3000:3000 -p 3001:3001 -v /someLocalStorage/data:/usr/src/app/data -v /mnt:/mnt --mount type=bind,source=/media,target=/media,bind-propagation=shared --name sd-card-copy roaders/sd-card-copy:latest
 ```
 
 #### -it 
 attach a terminal session so we can see what is going on
 #### -p 127.0.0.1:3000:3000
 connect local port 3000 to the exposed internal port 3000. Binding to `127.0.0.1` means only the machine itself (and so the `usbmount` hook) can make requests. The server has no authentication and can delete files so only use `-p 3000:3000` if you need to make requests from other machines.
+#### -p 3001:3001
+the status page, at `http://<pi address>:3001`. It can't start copies or change anything so it can be reached from other machines.
 #### -v /someLocalStorage/data:/usr/src/app/data
 map a folder to the data folder used in the container so we can configure the instance and store logs
 #### -v /mnt:/mnt
@@ -216,5 +223,5 @@ the image to base the container on
 $ docker pull roaders/sd-card-copy:latest
 $ docker stop sd-card-copy
 $ docker rm sd-card-copy
-$ docker run -it --name sd-card-copy -p 127.0.0.1:3000:3000 -v /someLocalStorage/data:/usr/src/app/data -v /mnt:/mnt --mount type=bind,source=/media,target=/media,bind-propagation=shared roaders/sd-card-copy:latest
+$ docker run -it --name sd-card-copy -p 127.0.0.1:3000:3000 -p 3001:3001 -v /someLocalStorage/data:/usr/src/app/data -v /mnt:/mnt --mount type=bind,source=/media,target=/media,bind-propagation=shared roaders/sd-card-copy:latest
 ```

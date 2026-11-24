@@ -1,10 +1,12 @@
-import { Controller, Get, HttpException, HttpStatus, Logger, Query } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Logger, Query, UseInterceptors } from '@nestjs/common';
+import { LoggingInterceptor } from 'nestjs-logging-interceptor';
 import { CopyParams } from '../contracts';
 import { isWithinPaths } from '../helpers';
 import { ConfigService } from '../services';
 import { CopyService } from '../services/copy.service';
 
 @Controller('copy-path')
+@UseInterceptors(new LoggingInterceptor(LoggingInterceptor.name))
 export class CopyPathController {
     private logger = new Logger(CopyPathController.name);
 

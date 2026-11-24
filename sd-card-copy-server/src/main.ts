@@ -8,6 +8,13 @@ import { AppModule } from './app.module';
 import { WinstonModule } from 'nest-winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import winston, { format } from 'winston';
+import { createServer } from 'http';
+import type { NextFunction, Request, Response } from 'express';
+
+/**
+ * the UI's page and assets, and the status API
+ */
+const statusPaths = /^\/(index\.html)?$|^\/assets\/|^\/api\//;
 
 async function bootstrap() {
     const logPath = process.env.logPath || 'logs/log.txt';
@@ -26,14 +33,25 @@ async function bootstrap() {
     });
 
     const port = process.env.port != null ? parseInt(process.env.port) : 3000;
+    const statusPort = process.env.statusPort != null ? parseInt(process.env.statusPort) : 3001;
 
     const app = await NestFactory.create(AppModule, {
         logger,
     });
 
-    await app.listen(port);
+    // the status port can be opened to the network as it only serves the status UI and API, which can't change anything
+    app.use((req: Request, res: Response, next: NextFunction) => {
+        if (req.socket.localPort === statusPort && (req.method !== 'GET' || !statusPaths.test(req.path))) {
+            res.status(404).end();
+            return;
+        }
+        next();
+    });
 
-    logger.log(`Application started on port ${port}`);
+    await app.listen(port);
+    createServer(app.getHttpAdapter().getInstance()).listen(statusPort);
+
+    logger.log(`Application started on port ${port}, status on port ${statusPort}`);
 }
 
 bootstrap();
