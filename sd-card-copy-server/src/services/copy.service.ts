@@ -3,11 +3,11 @@ import { CopyParams, TokenReplacementStrategy } from '../contracts';
 import copyProgress, { mapFileStats, streamScanPathResults, isIFilesProgress } from 'copy-progress';
 import { filter, last, map } from 'rxjs';
 import { DateStrategies } from '../strategies';
-import { applyTokenReplacementsStrategies } from '../helpers';
+import { applyTokenReplacementsStrategies, createUniqueFolder } from '../helpers';
 import { ConfigService } from './config.service';
 import prettyBytes from 'pretty-bytes';
 import ms from 'ms';
-import { readdir, rm } from 'fs/promises';
+import { readdir, rm, rmdir } from 'fs/promises';
 import { createReadStream, createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
 import { join, resolve } from 'path';
@@ -83,7 +83,7 @@ export class CopyService {
         }
 
         const unresolvedTokens: string[] = [];
-        const targetPath = await applyTokenReplacementsStrategies(
+        const replacedPath = await applyTokenReplacementsStrategies(
             params.targetPath,
             params.sourcePath,
             strategies,
@@ -95,6 +95,9 @@ export class CopyService {
             this.logger.warn(message);
             throw new UnprocessableEntityException(message);
         }
+
+        // a new folder for every copy so that files with the same name (e.g. from a camera's two drives) are not overwritten
+        const targetPath = await createUniqueFolder(replacedPath);
 
         this.logger.log(`Copying ${params.sourcePath} -> ${targetPath} (delete-source: ${params.deleteSource})`);
 
@@ -119,6 +122,7 @@ export class CopyService {
                 next: (lastValue) => {
                     if (lastValue == null) {
                         this.logger.log(`No files to copy in ${params.sourcePath}`);
+                        rmdir(targetPath).catch(() => undefined);
                         onComplete();
                         return;
                     }

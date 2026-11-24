@@ -48,7 +48,7 @@ Optional but recommended. A list of folders that `source-path` must be in (or eq
 
 **targetPath**
 
-Optional. If set provides the default target path when copying so that it does not have to be specified for each request. The following tokens can be included:
+Optional. If set provides the default target path when copying so that it does not have to be specified for each request. Every copy goes into a new folder: if the target folder already exists `-2` (then `-3`...) is appended so files are never overwritten, for example when a camera's internal drive and SD card are copied to the same `{CAMERA_NAME}` folder. The following tokens can be included:
 
   * `{TIMESTAMP}` - replaced with milliseconds since epoch
   * `{DATE}` - will be replaced with the default javascript `toDateString()` formatted date.

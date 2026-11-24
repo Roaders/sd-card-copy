@@ -1,5 +1,45 @@
-import { resolve } from 'path';
-import { isWithinPaths } from './path.helper';
+import { join, resolve } from 'path';
+import { mkdir, mkdtemp, readdir, rm } from 'fs/promises';
+import { tmpdir } from 'os';
+import { createUniqueFolder, isWithinPaths } from './path.helper';
+
+describe('createUniqueFolder', () => {
+    let root: string;
+
+    beforeEach(async () => {
+        root = await mkdtemp(join(tmpdir(), 'createUniqueFolder-'));
+    });
+
+    afterEach(() => rm(root, { recursive: true, force: true }));
+
+    it('creates the folder and any missing parents when it does not exist', async () => {
+        const target = join(root, '2026', 'Insta360_X6');
+
+        expect(await createUniqueFolder(target)).toBe(target);
+        expect(await readdir(join(root, '2026'))).toEqual(['Insta360_X6']);
+    });
+
+    it('appends the next free number when the folder and earlier numbers exist', async () => {
+        await mkdir(join(root, 'cam'));
+        await mkdir(join(root, 'cam-2'));
+        await mkdir(join(root, 'camera'));
+
+        expect(await createUniqueFolder(join(root, 'cam'))).toBe(join(root, 'cam-3'));
+    });
+
+    it('numbers the folder rather than nesting inside it when given a trailing separator', async () => {
+        await mkdir(join(root, 'cam'));
+
+        expect(await createUniqueFolder(join(root, 'cam') + '/')).toBe(join(root, 'cam-2'));
+    });
+
+    it('gives copies started together different folders', async () => {
+        const target = join(root, 'cam');
+        const folders = await Promise.all([createUniqueFolder(target), createUniqueFolder(target)]);
+
+        expect(folders.sort()).toEqual([target, `${target}-2`]);
+    });
+});
 
 describe('isWithinPaths', () => {
     const media = resolve('/media');
