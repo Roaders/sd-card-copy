@@ -1,7 +1,9 @@
 import { ConflictException, Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
 import { CopyParams, TokenReplacementStrategy } from '../contracts';
 import copyProgress, { mapFileStats, streamScanPathResults, isIFilesProgress } from 'copy-progress';
-import { filter, last, map } from 'rxjs';
+import { filter, last, map, tap } from 'rxjs';
+import { Transform } from 'stream';
+import { CopySession, SessionService } from './session.service';
 import { DateStrategies } from '../strategies';
 import { applyTokenReplacementsStrategies, createUniqueFolder } from '../helpers';
 import { ConfigService } from './config.service';
@@ -19,7 +21,8 @@ export class CopyService {
 
     constructor(
         dateStrategies: DateStrategies,
-        private configService: ConfigService
+        private configService: ConfigService,
+        private sessionService: SessionService
     ) {
         this.defaultReplacementStrategies = [dateStrategies.formattedDateStrategy, dateStrategies.timestampStrategy];
     }
@@ -41,10 +44,13 @@ export class CopyService {
         }
 
         this.activeSourcePaths.add(sourcePath);
+        const session = this.sessionService.start(params);
 
         try {
-            await this.copy(params, () => this.onCopyComplete(sourcePath, params));
+            await this.copy(params, session, () => this.onCopyComplete(sourcePath, params));
         } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            session.finish(err instanceof UnprocessableEntityException ? 'refused' : 'failed', message);
             this.onCopyComplete(sourcePath, params);
             throw err;
         }
@@ -70,7 +76,7 @@ export class CopyService {
     /**
      * Starts the copy and resolves once it has started. onComplete is called once the copy and any delete have finished or failed.
      */
-    private async copy(params: CopyParams, onComplete: () => void) {
+    private async copy(params: CopyParams, session: CopySession, onComplete: () => void) {
         let strategies = this.replacementStrategies;
 
         if (strategies == null) {
@@ -98,11 +104,13 @@ export class CopyService {
 
         // a new folder for every copy so that files with the same name (e.g. from a camera's two drives) are not overwritten
         const targetPath = await createUniqueFolder(replacedPath);
+        session.setTargetPath(targetPath);
 
         this.logger.log(`Copying ${params.sourcePath} -> ${targetPath} (delete-source: ${params.deleteSource})`);
 
         const filesStream = streamScanPathResults(params.sourcePath).pipe(
             filter((result) => result.stats.isFile()),
+            tap((result) => session.addFile(result.source, result.stats.size)),
             map((file) =>
                 mapFileStats({
                     file,
@@ -113,8 +121,26 @@ export class CopyService {
         );
 
         // not copy-progress's configureFileCopyProgressFunction: it leaves read stream errors unhandled, which crashes the process
-        const copyFunction = (source: string, destination: string) =>
-            pipeline(createReadStream(source, { highWaterMark: 1024 * 1024 }), createWriteStream(destination));
+        const copyFunction = async (source: string, destination: string) => {
+            session.startFile(source);
+            const countBytes = new Transform({
+                transform(chunk: Buffer, _encoding, callback) {
+                    session.addBytes(source, chunk.length);
+                    callback(null, chunk);
+                },
+            });
+            try {
+                await pipeline(
+                    createReadStream(source, { highWaterMark: 1024 * 1024 }),
+                    countBytes,
+                    createWriteStream(destination)
+                );
+                session.completeFile(source);
+            } catch (err) {
+                session.failFile(source);
+                throw err;
+            }
+        };
 
         copyProgress(filesStream, { concurrentCopy: 1, copyFunction })
             .pipe(filter(isIFilesProgress), last(null, undefined))
@@ -123,6 +149,7 @@ export class CopyService {
                     if (lastValue == null) {
                         this.logger.log(`No files to copy in ${params.sourcePath}`);
                         rmdir(targetPath).catch(() => undefined);
+                        session.finish('complete');
                         onComplete();
                         return;
                     }
@@ -131,12 +158,22 @@ export class CopyService {
                     this.logger.log(
                         `Copied ${lastValue.totalFiles} files (${bytes}) ${params.sourcePath} -> ${targetPath} in ${time}`
                     );
+                    if (params.deleteSource) {
+                        session.deleting();
+                    }
                     this.deleteContent(params)
-                        .catch((err) => this.logger.error(`Delete of '${params.sourcePath}' failed: ${err}`))
+                        .then(
+                            () => session.finish('complete'),
+                            (err) => {
+                                this.logger.error(`Delete of '${params.sourcePath}' failed: ${err}`);
+                                session.finish('failed', `Delete failed: ${err}`);
+                            }
+                        )
                         .finally(onComplete);
                 },
                 error: (err) => {
                     this.logger.error(`Copy ${params.sourcePath} -> ${targetPath} failed: ${err}`);
+                    session.finish('failed', `Copy failed: ${err}`);
                     onComplete();
                 },
             });
