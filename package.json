@@ -8,7 +8,7 @@
         "test": "npm test -w sd-card-copy-server",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
-        "build": "npm run -w sd-card-copy-server build",
+        "build": "npm run build --workspaces",
         "start": "npm run -w sd-card-copy-server start:dev",
         "prestart:prod": "npm run clean",
         "start:prod": "npm run -w sd-card-copy-server start:prod",
@@ -29,7 +29,8 @@
     },
     "homepage": "https://github.com/Roaders/sd-card-copy#readme",
     "workspaces": [
-        "sd-card-copy-server"
+        "sd-card-copy-server",
+        "sd-card-copy-ui"
     ],
     "devDependencies": {
         "@eslint/js": "^10.0.0",

@@ -9,6 +9,8 @@ import { WinstonModule } from 'nest-winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import winston, { format } from 'winston';
 import { createServer } from 'http';
+import { join } from 'path';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import type { NextFunction, Request, Response } from 'express';
 
 /**
@@ -35,7 +37,7 @@ async function bootstrap() {
     const port = process.env.port != null ? parseInt(process.env.port) : 3000;
     const statusPort = process.env.statusPort != null ? parseInt(process.env.statusPort) : 3001;
 
-    const app = await NestFactory.create(AppModule, {
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
         logger,
     });
 
@@ -47,6 +49,8 @@ async function bootstrap() {
         }
         next();
     });
+    // built by sd-card-copy-ui
+    app.useStaticAssets(join(__dirname, '../ui'));
 
     await app.listen(port);
     createServer(app.getHttpAdapter().getInstance()).listen(statusPort);

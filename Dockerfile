@@ -9,6 +9,7 @@ RUN apk add --no-cache uhubctl
 
 COPY package*.json ./
 COPY sd-card-copy-server/package.json ./sd-card-copy-server/package.json
+COPY sd-card-copy-ui/package.json ./sd-card-copy-ui/package.json
 COPY dist dist
 
 RUN npm ci --omit=dev
