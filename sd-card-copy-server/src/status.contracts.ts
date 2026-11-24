@@ -36,6 +36,13 @@ export interface IStatus {
     totalSpeed: number; // bytes per second of every file being copied
 }
 
+export interface ILogEntry {
+    timestamp: string;
+    level: string;
+    context?: string;
+    message: string;
+}
+
 export interface ICompletedSessions {
     sessions: ICopySession[]; // newest first
     total: number;

@@ -9,6 +9,7 @@ import { WinstonModule } from 'nest-winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import winston, { format } from 'winston';
 import { createServer } from 'http';
+import { LogBufferTransport } from './log-buffer';
 import { join } from 'path';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import type { NextFunction, Request, Response } from 'express';
@@ -20,7 +21,7 @@ const statusPaths = /^\/(index\.html)?$|^\/assets\/|^\/api\//;
 
 async function bootstrap() {
     const logPath = process.env.logPath || 'logs/log.txt';
-    const transports: winston.transport[] = [];
+    const transports: winston.transport[] = [new LogBufferTransport()];
 
     if (process.env.logType != 'console') {
         transports.push(new DailyRotateFile({ filename: getPath(logPath) }));

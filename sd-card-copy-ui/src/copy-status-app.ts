@@ -2,6 +2,7 @@ import { css, html, LitElement, nothing } from 'lit';
 import type { ICompletedSessions, ICopySession, IStatus } from '../../sd-card-copy-server/src/status.contracts';
 import { formatSpeed } from './format';
 import './copy-session-view';
+import './log-panel';
 
 const pageSize = 10;
 
@@ -14,12 +15,14 @@ export class CopyStatusApp extends LitElement {
         completed: { state: true },
         completedTotal: { state: true },
         connected: { state: true },
+        showLogs: { state: true },
     };
 
     declare status: IStatus | undefined;
     declare completed: ICopySession[];
     declare completedTotal: number;
     declare connected: boolean;
+    declare showLogs: boolean;
 
     private events: EventSource | undefined;
     private shownCount = pageSize;
@@ -30,6 +33,7 @@ export class CopyStatusApp extends LitElement {
         this.completed = [];
         this.completedTotal = 0;
         this.connected = false;
+        this.showLogs = false;
     }
 
     static styles = css`
@@ -92,6 +96,13 @@ export class CopyStatusApp extends LitElement {
                 font-size: 22px;
             }
         }
+        button.logs {
+            margin-top: 0;
+        }
+        .log-space {
+            /* so the end of the page can be scrolled above the log panel */
+            height: 40vh;
+        }
         button {
             font: inherit;
             margin-top: 12px;
@@ -123,6 +134,9 @@ export class CopyStatusApp extends LitElement {
         return html`
             <header>
                 <h1>SD Card Copy</h1>
+                <button class="logs" @click=${() => (this.showLogs = !this.showLogs)}>
+                    ${this.showLogs ? 'Hide logs' : 'Logs'}
+                </button>
                 <div class="total">
                     <div class="speed">${formatSpeed(this.status?.totalSpeed ?? 0)}</div>
                     <div class="label">total copy speed</div>
@@ -152,6 +166,12 @@ export class CopyStatusApp extends LitElement {
             ${
                 this.completed.length < this.completedTotal
                     ? html`<button @click=${this.showMore}>More</button>`
+                    : nothing
+            }
+            ${
+                this.showLogs
+                    ? html`<div class="log-space"></div>
+                          <log-panel @close=${() => (this.showLogs = false)}></log-panel>`
                     : nothing
             }
         `;

@@ -2,6 +2,7 @@ import { Controller, Get, MessageEvent, Query, Sse } from '@nestjs/common';
 import { auditTime, interval, map, merge, Observable, startWith } from 'rxjs';
 import { SessionService } from '../services';
 import type { ICompletedSessions } from '../status.contracts';
+import { logEntries } from '../log-buffer';
 
 /**
  * Read only status of the copies, served on the status port as well as the main port
@@ -19,6 +20,14 @@ export class StatusController {
             startWith(0),
             map(() => ({ data: this.sessionService.getStatus() }))
         );
+    }
+
+    /**
+     * the last 500 log entries then each new one
+     */
+    @Sse('logs')
+    public logs(): Observable<MessageEvent> {
+        return logEntries.pipe(map((data) => ({ data })));
     }
 
     @Get('sessions/completed')
