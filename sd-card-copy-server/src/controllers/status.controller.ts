@@ -1,7 +1,7 @@
 import { Controller, Get, MessageEvent, Query, Sse } from '@nestjs/common';
 import { auditTime, interval, map, merge, Observable, startWith } from 'rxjs';
 import { SessionService } from '../services';
-import type { ICompletedSessions } from '../status.contracts';
+import type { ICompletedSessions, ISpeedHistory } from '../status.contracts';
 import { logEntries } from '../log-buffer';
 
 /**
@@ -28,6 +28,11 @@ export class StatusController {
     @Sse('logs')
     public logs(): Observable<MessageEvent> {
         return logEntries.pipe(map((data) => ({ data })));
+    }
+
+    @Get('speed-history')
+    public speedHistory(): ISpeedHistory {
+        return this.sessionService.getSpeedHistory();
     }
 
     @Get('sessions/completed')

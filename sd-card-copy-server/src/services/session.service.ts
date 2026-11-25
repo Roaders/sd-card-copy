@@ -1,10 +1,28 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Subject } from 'rxjs';
 import { relative } from 'path';
 import { CopyParams } from '../contracts';
-import { CopySessionState, ICompletedSessions, ICopyFile, ICopySession, IStatus } from '../status.contracts';
+import {
+    CopySessionState,
+    ICompletedSessions,
+    ICopyFile,
+    ICopySession,
+    ISpeedHistory,
+    IStatus,
+    SpeedSample,
+} from '../status.contracts';
 
 const maxCompletedSessions = 100;
+
+/**
+ * Speeds are recorded this often for the graphs
+ */
+const speedSampleMs = 1000;
+
+/**
+ * How long the total speed is kept for. Each active session keeps its speed for the whole session.
+ */
+const totalSpeedHistoryMs = 30 * 60 * 1000;
 
 /**
  * File speeds are measured over this period so they follow the current speed rather than the average since the start
@@ -23,9 +41,10 @@ export class CopySession {
     private message: string | undefined;
     private readonly started = Date.now();
     private finished: number | undefined;
+    public readonly speedHistory: SpeedSample[] = [];
 
     constructor(
-        private readonly id: number,
+        public readonly id: number,
         private readonly params: CopyParams,
         private readonly onChange: () => void,
         private readonly onFinish: (session: CopySession) => void
@@ -133,8 +152,10 @@ export class CopySession {
  * Keeps the copy sessions in memory: the ones running and the last 100 completed
  */
 @Injectable()
-export class SessionService {
+export class SessionService implements OnModuleDestroy {
     private nextId = 1;
+    private readonly totalSpeedHistory: SpeedSample[] = [];
+    private readonly sampleTimer = setInterval(() => this.sampleSpeeds(), speedSampleMs);
     private readonly activeSessions: CopySession[] = [];
     private readonly completedSessions: ICopySession[] = [];
 
@@ -157,11 +178,10 @@ export class SessionService {
 
     public getStatus(): IStatus {
         const activeSessions = this.activeSessions.map((session) => session.toJSON());
-        const totalSpeed = activeSessions
-            .flatMap((session) => session.files)
-            .reduce((total, file) => total + (file.speed ?? 0), 0);
+        const totalSpeed = activeSessions.reduce((total, session) => total + sessionSpeed(session), 0);
 
         return {
+            time: Date.now(),
             activeSessions,
             completedCount: this.completedSessions.length,
             lastCompletedId: this.completedSessions[0]?.id,
@@ -176,10 +196,39 @@ export class SessionService {
         };
     }
 
+    /**
+     * The recorded speeds for the graphs. The status gives the latest speeds to add to them.
+     */
+    public getSpeedHistory(): ISpeedHistory {
+        return {
+            total: this.totalSpeedHistory,
+            sessions: Object.fromEntries(this.activeSessions.map((session) => [session.id, session.speedHistory])),
+        };
+    }
+
+    public onModuleDestroy() {
+        clearInterval(this.sampleTimer);
+    }
+
+    private sampleSpeeds() {
+        const { time, activeSessions, totalSpeed } = this.getStatus();
+        activeSessions.forEach((snapshot, index) =>
+            this.activeSessions[index].speedHistory.push([time, sessionSpeed(snapshot)])
+        );
+        this.totalSpeedHistory.push([time, totalSpeed]);
+        while (this.totalSpeedHistory[0][0] <= time - totalSpeedHistoryMs) {
+            this.totalSpeedHistory.shift();
+        }
+    }
+
     private finish(session: CopySession) {
         this.activeSessions.splice(this.activeSessions.indexOf(session), 1);
         this.completedSessions.unshift(session.toJSON());
         this.completedSessions.splice(maxCompletedSessions);
         this.changes.next();
     }
+}
+
+function sessionSpeed(session: ICopySession): number {
+    return session.files.reduce((total, file) => total + (file.speed ?? 0), 0);
 }

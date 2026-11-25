@@ -72,6 +72,36 @@ describe('SessionService', () => {
         expect(status.totalSpeed).toBe(35 * mb);
     });
 
+    it('records the speed every second: the total for 30 minutes and each active session since it started', () => {
+        const first = start('/media/usb0');
+        first.addFile('/media/usb0/a.insv', 100000 * mb);
+        first.startFile('/media/usb0/a.insv');
+        for (let second = 1; second <= 31 * 60; second++) {
+            vi.advanceTimersByTime(1000);
+            first.addBytes('/media/usb0/a.insv', 10 * mb);
+        }
+
+        let history = service.getSpeedHistory();
+        expect(history.total).toHaveLength(30 * 60);
+        expect(history.total[0][0]).toBe(60 * 1000 + 1000);
+        // sampled just before that second's 10MB arrives, so the 3 second window holds 20MB
+        expect(history.total.at(-1)).toEqual([31 * 60 * 1000, (20 * mb) / 3]);
+        expect(history.sessions[1].at(-1)).toEqual(history.total.at(-1));
+        expect(history.sessions[1]).toHaveLength(31 * 60);
+        expect(history.sessions[1][0][0]).toBe(1000);
+
+        const second = start('/media/usb1');
+        vi.advanceTimersByTime(2000);
+        first.finish('complete');
+
+        history = service.getSpeedHistory();
+        expect(Object.keys(history.sessions)).toEqual([String(second.id)]);
+        expect(history.sessions[second.id]).toEqual([
+            [31 * 60 * 1000 + 1000, 0],
+            [31 * 60 * 1000 + 2000, 0],
+        ]);
+    });
+
     it('moves finished sessions to the completed list, newest first, keeping the last 100', () => {
         start('/media/active');
         for (let index = 1; index <= 105; index++) {
