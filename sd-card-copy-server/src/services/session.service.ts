@@ -2,6 +2,7 @@ import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Subject } from 'rxjs';
 import { relative } from 'path';
 import { CopyParams } from '../contracts';
+import { version } from '../version';
 import {
     CopySessionState,
     ICompletedSessions,
@@ -181,6 +182,7 @@ export class SessionService implements OnModuleDestroy {
         const totalSpeed = activeSessions.reduce((total, session) => total + sessionSpeed(session), 0);
 
         return {
+            version,
             time: Date.now(),
             activeSessions,
             completedCount: this.completedSessions.length,

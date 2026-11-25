@@ -32,7 +32,7 @@ Served on `statusPort` (default `3001`), e.g. `http://<pi address>:3001`. Each d
 
 The status port only serves the page and the read only API it uses, so unlike `port` it can be reached from other machines:
 
-  * `GET /api/status` - server-sent events with the sessions in progress and the total speed, every second
+  * `GET /api/status` - server-sent events with the sessions in progress, the total speed and the server's version, every second
   * `GET /api/speed-history` - the speed recorded every second: the total for the last 30 minutes and each session in progress since it started
   * `GET /api/sessions/completed?offset=0&limit=10` - finished sessions, newest first
   * `GET /api/logs` - server-sent events with the last 500 log entries, then each new one

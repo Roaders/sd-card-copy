@@ -30,6 +30,7 @@ export interface ICopySession {
 }
 
 export interface IStatus {
+    version: string; // of the server
     time: number; // when the status was read, for adding the speeds to the graphs
     activeSessions: ICopySession[]; // newest first
     completedCount: number;

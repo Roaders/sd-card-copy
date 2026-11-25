@@ -71,6 +71,11 @@ export class CopyStatusApp extends LitElement {
             font-size: 20px;
             margin: 0;
         }
+        .version {
+            font-size: 12px;
+            color: #57606a;
+            margin-left: -8px;
+        }
         .total {
             margin-left: auto;
             text-align: right;
@@ -163,6 +168,7 @@ export class CopyStatusApp extends LitElement {
         return html`
             <header>
                 <h1>SD Card Copy</h1>
+                ${this.status ? html`<span class="version">v${this.status.version}</span>` : nothing}
                 <button class="logs" @click=${() => (this.showLogs = !this.showLogs)}>
                     ${this.showLogs ? 'Hide logs' : 'Logs'}
                 </button>
