@@ -31,8 +31,9 @@ vi.mock('../helpers', async (importOriginal) => ({
 }));
 
 import { insta360PowerCycle } from './insta360.strategy';
+import { garminPowerCycle } from './garmin.strategy';
 
-describe('insta360PowerCycle', () => {
+describe('usbPowerCycle', () => {
     const camera = { vendorId: '2e1a', hub: '2-1.4', port: '4', sysfsPath: '/sys/devices/usb2/2-1/2-1.4/2-1.4.4' };
     const powerCycle = insta360PowerCycle({ offMinutes: 5 });
     const settled = () => vi.waitFor(() => expect(mocks.waits.length).toBeGreaterThan(0));
@@ -48,6 +49,12 @@ describe('insta360PowerCycle', () => {
             '/media/usb0': camera,
             '/media/usb1': camera,
             '/media/usb2': { vendorId: '056e', hub: '2-1', port: '1', sysfsPath: '/sys/devices/usb2/2-1/2-1.1' },
+            '/media/usb3': {
+                vendorId: '091e',
+                hub: '2-1.4',
+                port: '3',
+                sysfsPath: '/sys/devices/usb2/2-1/2-1.4/2-1.4.3',
+            },
         };
     });
 
@@ -85,8 +92,25 @@ describe('insta360PowerCycle', () => {
         expect(mocks.commands.at(-1)).toBe('uhubctl -l 2-1.4 -p 4 -a on');
     });
 
+    it(`turns a Garmin camera's port off for 7 minutes by default, leaving the Insta360 alone`, async () => {
+        const garmin = garminPowerCycle();
+        await garmin({ sourcePath: '/media/usb0', targetPath: '/mnt', deleteSource: true }, () => []);
+        expect(mocks.waits).toEqual([]);
+
+        const cycle = garmin({ sourcePath: '/media/usb3', targetPath: '/mnt', deleteSource: true }, () => []);
+        (await nextWait()).resolve();
+        const off = await nextWait();
+
+        expect(off.ms).toBe(7 * 60 * 1000);
+        expect(mocks.commands.at(-1)).toBe('uhubctl -l 2-1.4 -p 3 -a off');
+        off.resolve();
+        await cycle;
+        expect(mocks.commands.at(-1)).toBe('uhubctl -l 2-1.4 -p 3 -a on');
+    });
+
     it('does nothing for a drive that is not an Insta360 or when the source is not deleted', async () => {
         await powerCycle({ sourcePath: '/media/usb2', targetPath: '/mnt', deleteSource: true }, () => []);
+        await powerCycle({ sourcePath: '/media/usb3', targetPath: '/mnt', deleteSource: true }, () => []);
         await powerCycle({ sourcePath: '/media/usb0', targetPath: '/mnt', deleteSource: false }, () => []);
 
         expect(mocks.waits).toEqual([]);

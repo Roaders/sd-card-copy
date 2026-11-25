@@ -1,93 +1,23 @@
 import { AfterCopyAction, CAMERA_NAME_TOKEN, TokenReplacementStrategy } from '../contracts';
-import { getUsbDevice, UsbPort } from '../helpers';
-import { Logger } from '@nestjs/common';
-import { execFile } from 'child_process';
-import { readFile, writeFile } from 'fs/promises';
-import { posix, resolve } from 'path';
-import { setTimeout } from 'timers/promises';
-import { promisify } from 'util';
-import ms from 'ms';
+import { readFile } from 'fs/promises';
+import { resolve } from 'path';
+import { usbPowerCycle } from './usb-power-cycle';
 
 export const INSTA360_MODEL_TOKEN = 'INSTA360_MODEL';
 export const INSTA360_SERIAL_TOKEN = 'INSTA360_SERIAL';
 
 const INSTA360_USB_VENDOR_ID = '2e1a';
 
-const logger = new Logger('Insta360PowerCycle');
-const execFileAsync = promisify(execFile);
-
 /**
- * How long to wait after a drive has finished before turning the power off: the camera's drives are mounted and
- * requested a few seconds apart, so an empty or refused first drive finishes before the second has started
- */
-const SETTLE_MS = 60 * 1000;
-
-/**
- * hub ports with a power cycle waiting or running, so the camera's second drive does not start another
- */
-const pendingPorts = new Set<string>();
-
-/**
- * An afterCopy action. When the source is a drive on an Insta360 camera plugged in over USB and delete-source was set,
- * it turns off the camera's hub port with uhubctl once none of the camera's drives are being copied (whether they were
- * copied, failed or refused), so the camera leaves file transfer mode and goes to sleep. After offMinutes it turns the
- * port back on so the camera charges. Ejecting the drives is not enough: the camera stays awake while it has USB power.
- * Copies from other ports carry on. Needs a hub that supports per-port power switching and the container to have
- * access to /dev/bus/usb and write access to /sys/devices.
+ * An afterCopy action that turns off the USB power to an Insta360 once its drives have been copied so it goes to sleep,
+ * then back on after offMinutes (default 5) so it charges. Set the camera's auto power off to less than offMinutes.
  */
 export function insta360PowerCycle(options: { offMinutes?: number } = {}): AfterCopyAction {
-    const offMs = (options.offMinutes ?? 5) * 60 * 1000;
-
-    return async ({ sourcePath, deleteSource }, getActiveSourcePaths) => {
-        if (!deleteSource) {
-            return;
-        }
-
-        const device = await getUsbDevice(sourcePath);
-
-        if (device?.vendorId !== INSTA360_USB_VENDOR_ID) {
-            return;
-        }
-
-        const portName = `hub ${device.hub} port ${device.port}`;
-
-        if (pendingPorts.has(portName)) {
-            return;
-        }
-
-        pendingPorts.add(portName);
-
-        try {
-            await setTimeout(SETTLE_MS);
-
-            // the camera has two drives (internal and SD card): the last one to finish turns the power off
-            for (const activePath of getActiveSourcePaths()) {
-                const activeDevice = await getUsbDevice(activePath);
-                if (activeDevice?.hub === device.hub && activeDevice.port === device.port) {
-                    logger.log(`Not powering off ${portName} yet: still copying ${activePath}`);
-                    return;
-                }
-            }
-
-            await execFileAsync('sync');
-            logger.log(`Powering off Insta360 (${sourcePath}) on ${portName} for ${ms(offMs)}`);
-            // otherwise kernels before 6.0 turn the port's power straight back on. The camera is authorised again when it reconnects
-            await writeFile(posix.join(device.sysfsPath, 'authorized'), '0');
-            await setPortPower(device, 'off');
-            try {
-                await setTimeout(offMs);
-            } finally {
-                await setPortPower(device, 'on');
-                logger.log(`Powered on ${portName}`);
-            }
-        } finally {
-            pendingPorts.delete(portName);
-        }
-    };
-}
-
-async function setPortPower({ hub, port }: UsbPort, action: 'on' | 'off') {
-    await execFileAsync('uhubctl', ['-l', hub, '-p', port, '-a', action]);
+    return usbPowerCycle({
+        cameraName: 'Insta360',
+        vendorId: INSTA360_USB_VENDOR_ID,
+        offMinutes: options.offMinutes ?? 5,
+    });
 }
 
 /**

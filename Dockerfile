@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 
 ENV NODE_ENV=production
 
-# used by the Insta360 power cycle afterCopy action
+# used by the Insta360 and Garmin power cycle afterCopy actions
 RUN apk add --no-cache uhubctl
 
 COPY package*.json ./

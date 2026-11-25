@@ -2,10 +2,10 @@
 
 Copies SD cards and cameras to another folder, such as a NAS share, as soon as they are plugged in. It runs in Docker on a Raspberry Pi: [usbmount](#usbmount) mounts each drive and asks the server to copy it.
 
-  * **Folders per camera and date** - the target path can include the date and details read from the card, such as the name set on a Garmin VIRB or the model and serial number of an Insta360 ([camera strategies](#config)).
+  * **Folders per camera and date** - the target path can include the date and details read from the card, such as the model of a Garmin VIRB or the model and serial number of an Insta360 ([camera strategies](#config)).
   * **Nothing is overwritten** - every copy goes into a new folder. A drive is not copied at all if a token in the target path can't be filled in, for example a card from an unknown camera.
   * **Optionally empties the card** once it has been copied (`delete-source=true`).
-  * **Puts an Insta360 camera to sleep** after copying by switching off its USB port, then back on so it charges ([afterCopy](#config)).
+  * **Puts an Insta360 or Garmin camera to sleep** after copying by switching off its USB port, then back on so it charges ([afterCopy](#config)).
   * **Status page** - copies in progress with each file's progress and speed, graphs of the copy speed, the last 100 finished, and the server's logs ([status page](#status-page)).
 
 ![Status page](docs/status-page.png)
@@ -136,10 +136,12 @@ Optional. Functions called after each copy request has finished, whether it copi
 
 `insta360PowerCycle` turns off the USB power to an Insta360 camera once its drives have been dealt with (`delete-source=true`), so that it leaves file transfer mode and goes to sleep. This happens whether the drives were copied, had nothing to copy, failed or were refused. Ejecting the drives is not enough: the camera stays awake while it has USB power. It waits a minute after a drive finishes so the camera's other drive has been requested, and until that drive has finished too. After `offMinutes` (default 5) the power is turned back on so the camera charges. Set the camera's auto power off to less than `offMinutes`. Copies from other ports carry on.
 
+`garminPowerCycle` does the same for a Garmin camera plugged in over USB (written for a VIRB Ultra 30), with `offMinutes` defaulting to 7. On the camera turn Auto Off on (it turns off after 5 minutes) and set External Power to charge mode, otherwise it turns itself back on when the power returns and is copied and power cycled again. Only cameras are power cycled: a card in a card reader is not affected.
+
 ```js
 module.exports = {
     // ...
-    afterCopy: [insta360.insta360PowerCycle({ offMinutes: 5 })],
+    afterCopy: [insta360.insta360PowerCycle({ offMinutes: 5 }), garmin.garminPowerCycle({ offMinutes: 7 })],
 };
 ```
 
@@ -253,11 +255,11 @@ services:
         target: /media
         bind:
           propagation: shared # sees drives mounted by usbmount
-      # only needed for insta360PowerCycle
+      # only needed for insta360PowerCycle and garminPowerCycle
       - /dev/bus/usb:/dev/bus/usb
       - /sys/devices:/sys/devices
     device_cgroup_rules:
-      - 'c 189:* rmw' # only needed for insta360PowerCycle
+      - 'c 189:* rmw' # only needed for insta360PowerCycle and garminPowerCycle
     ports:
       - 127.0.0.1:3000:3000 # copy requests, from this machine only
       - 3001:3001 # status page
