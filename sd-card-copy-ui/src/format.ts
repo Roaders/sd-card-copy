@@ -26,6 +26,17 @@ export function formatDuration(milliseconds: number): string {
     return minutes < 60 ? `${minutes}m ${seconds % 60}s` : `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
 }
 
+/**
+ * whole minutes, rounded up so it does not flicker every second: 12m, 1h 5m, <1m
+ */
+export function formatRemaining(milliseconds: number): string {
+    const minutes = Math.ceil(milliseconds / 60000);
+    if (minutes <= 1) {
+        return milliseconds < 60000 ? '<1m' : '1m';
+    }
+    return minutes < 60 ? `${minutes}m` : `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+}
+
 export function formatTime(timestamp: number): string {
     return new Date(timestamp).toLocaleString(undefined, {
         weekday: 'short',

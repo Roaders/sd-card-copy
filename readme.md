@@ -6,7 +6,7 @@ Copies SD cards and cameras to another folder, such as a NAS share, as soon as t
   * **Nothing is overwritten** - every copy goes into a new folder. A drive is not copied at all if a token in the target path can't be filled in, for example a card from an unknown camera.
   * **Optionally empties the card** once it has been copied (`delete-source=true`).
   * **Puts an Insta360 or Garmin camera to sleep** after copying by switching off its USB port, then back on so it charges ([afterCopy](#config)).
-  * **Status page** - copies in progress with each file's progress and speed, graphs of the copy speed, the last 100 finished, and the server's logs ([status page](#status-page)).
+  * **Status page** - copies in progress with each file's progress and speed, the time remaining, graphs of the copy speed, the last 100 finished, and the server's logs ([status page](#status-page)).
 
 ![Status page](docs/status-page.png)
 

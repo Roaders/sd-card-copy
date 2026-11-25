@@ -1,7 +1,9 @@
 import { css, html, LitElement, nothing } from 'lit';
 import type { ICopyFile, ICopySession, SpeedSample } from '../../sd-card-copy-server/src/status.contracts';
-import { formatBytes, formatDuration, formatSpeed, formatTime } from './format';
+import { formatBytes, formatDuration, formatRemaining, formatSpeed, formatTime } from './format';
 import './speed-graph';
+
+const remainingSpeedWindowMs = 30 * 1000;
 
 const stateLabels: Record<ICopySession['state'], string> = {
     scanning: 'Scanning',
@@ -163,9 +165,12 @@ export class CopySessionView extends LitElement {
                 ? ` · took ${formatDuration(session.finished - session.started)}`
                 : '';
         const fileCount = `${files.length} ${files.length === 1 ? 'file' : 'files'}`;
+        const remaining = session.finished == null ? this.remainingMs() : undefined;
         const progress =
             files.length > 0
-                ? `${completedFiles} / ${fileCount} · ${formatBytes(copiedBytes)} / ${formatBytes(totalBytes)} · `
+                ? `${completedFiles} / ${fileCount} · ${formatBytes(copiedBytes)} / ${formatBytes(totalBytes)} · ${
+                      remaining != null ? `${formatRemaining(remaining)} left · ` : ''
+                  }`
                 : '';
         const table = html`<table>
             ${files.map((file) => this.renderFile(file))}
@@ -193,6 +198,22 @@ export class CopySessionView extends LitElement {
                 }
             </div>
         `;
+    }
+
+    /**
+     * the bytes still to copy at the session's average speed over the last 30 seconds, which is steadier than the
+     * current speed. Undefined until the session has a speed.
+     */
+    private remainingMs(): number | undefined {
+        const samples = this.speedHistory ?? [];
+        const end = samples.at(-1)?.[0] ?? 0;
+        const recent = samples.filter(([time]) => time > end - remainingSpeedWindowMs);
+        const speed = recent.reduce((total, [, sampleSpeed]) => total + sampleSpeed, 0) / recent.length;
+        const remainingBytes = this.session.files
+            .filter((file) => file.state === 'pending' || file.state === 'copying')
+            .reduce((total, file) => total + file.size - file.copiedBytes, 0);
+
+        return speed > 0 ? (remainingBytes / speed) * 1000 : undefined;
     }
 
     private renderFile(file: ICopyFile) {
