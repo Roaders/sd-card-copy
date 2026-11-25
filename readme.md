@@ -126,7 +126,7 @@ module.exports = {
 };
 ```
 
-  * `{CAMERA_NAME}` - a folder name unique to the camera: the name set on a Garmin camera, or model and serial number for an Insta360 (e.g. `Insta360_X6_ABC123DEF45678`)
+  * `{CAMERA_NAME}` - a folder name for the camera: the model of a Garmin camera (e.g. `VIRB Ultra 30`), or model and serial number for an Insta360 (e.g. `Insta360_X6_ABC123DEF45678`)
   * `{GARMIN_DEVICE_NAME}`, `{GARMIN_DEVICE_ID}`, `{GARMIN_MODEL_NAME}` - from `Garmin/GarminDevice.xml`
   * `{INSTA360_MODEL}`, `{INSTA360_SERIAL}` - from `DCIM/fileinfo_list.list` (tested with an X6)
 

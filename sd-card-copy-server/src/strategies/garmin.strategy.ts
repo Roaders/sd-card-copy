@@ -16,7 +16,7 @@ export const garminDeviceName: TokenReplacementStrategy = async (
     _target: string,
     sourcePath: string
 ) => {
-    if (token !== GARMIN_DEVICE_NAME_TOKEN && token !== CAMERA_NAME_TOKEN) {
+    if (token !== GARMIN_DEVICE_NAME_TOKEN) {
         return undefined;
     }
 
@@ -62,7 +62,7 @@ export const garminModelName: TokenReplacementStrategy = async (
     _target: string,
     sourcePath: string
 ) => {
-    if (token !== GARMIN_MODEL_NAME_TOKEN) {
+    if (token !== GARMIN_MODEL_NAME_TOKEN && token !== CAMERA_NAME_TOKEN) {
         return undefined;
     }
 
