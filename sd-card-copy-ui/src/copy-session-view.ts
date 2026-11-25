@@ -1,6 +1,7 @@
 import { css, html, LitElement, nothing } from 'lit';
-import type { ICopyFile, ICopySession } from '../../sd-card-copy-server/src/status.contracts';
+import type { ICopyFile, ICopySession, SpeedSample } from '../../sd-card-copy-server/src/status.contracts';
 import { formatBytes, formatDuration, formatSpeed, formatTime } from './format';
+import './speed-graph';
 
 const stateLabels: Record<ICopySession['state'], string> = {
     scanning: 'Scanning',
@@ -15,9 +16,10 @@ const stateLabels: Record<ICopySession['state'], string> = {
  * One copy session: a drive and its files. The files of a finished session are collapsed.
  */
 export class CopySessionView extends LitElement {
-    static properties = { session: { attribute: false } };
+    static properties = { session: { attribute: false }, speedHistory: { attribute: false } };
 
     declare session: ICopySession;
+    declare speedHistory: SpeedSample[] | undefined; // shown as a graph while the session is active
 
     static styles = css`
         :host {
@@ -78,6 +80,10 @@ export class CopySessionView extends LitElement {
         }
         details {
             margin-top: 8px;
+        }
+        speed-graph {
+            margin-top: 10px;
+            --speed-graph-height: 60px;
         }
         summary {
             cursor: pointer;
@@ -174,6 +180,7 @@ export class CopySessionView extends LitElement {
                 </div>
                 ${session.targetPath ? html`<div class="target">→ ${session.targetPath}</div>` : nothing}
                 ${session.message ? html`<div class="message">${session.message}</div>` : nothing}
+                ${this.speedHistory != null ? html`<speed-graph .samples=${this.speedHistory}></speed-graph>` : nothing}
                 ${
                     files.length === 0
                         ? nothing

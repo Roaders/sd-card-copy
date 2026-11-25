@@ -1,10 +1,22 @@
 import { css, html, LitElement, nothing } from 'lit';
-import type { ICompletedSessions, ICopySession, IStatus } from '../../sd-card-copy-server/src/status.contracts';
+import type {
+    ICompletedSessions,
+    ICopySession,
+    ISpeedHistory,
+    IStatus,
+    SpeedSample,
+} from '../../sd-card-copy-server/src/status.contracts';
 import { formatSpeed } from './format';
 import './copy-session-view';
 import './log-panel';
+import './speed-graph';
 
 const pageSize = 10;
+
+/**
+ * matches the server's total speed history
+ */
+const totalHistoryMs = 30 * 60 * 1000;
 
 /**
  * The status page: total speed, the sessions in progress and the finished sessions
@@ -16,6 +28,8 @@ export class CopyStatusApp extends LitElement {
         completedTotal: { state: true },
         connected: { state: true },
         showLogs: { state: true },
+        totalHistory: { state: true },
+        sessionHistory: { state: true },
     };
 
     declare status: IStatus | undefined;
@@ -23,6 +37,8 @@ export class CopyStatusApp extends LitElement {
     declare completedTotal: number;
     declare connected: boolean;
     declare showLogs: boolean;
+    declare totalHistory: SpeedSample[];
+    declare sessionHistory: Map<number, SpeedSample[]>;
 
     private events: EventSource | undefined;
     private shownCount = pageSize;
@@ -34,6 +50,8 @@ export class CopyStatusApp extends LitElement {
         this.completedTotal = 0;
         this.connected = false;
         this.showLogs = false;
+        this.totalHistory = [];
+        this.sessionHistory = new Map();
     }
 
     static styles = css`
@@ -65,6 +83,14 @@ export class CopyStatusApp extends LitElement {
         .total .label {
             font-size: 12px;
             color: #57606a;
+        }
+        .total-graph {
+            background: white;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            padding: 12px 16px 8px;
+            margin-bottom: 16px;
+            --speed-graph-height: 120px;
         }
         .disconnected {
             background: #fff8c5;
@@ -118,7 +144,10 @@ export class CopyStatusApp extends LitElement {
         super.connectedCallback();
         // EventSource reconnects by itself if the server restarts
         this.events = new EventSource('api/status');
-        this.events.onopen = () => (this.connected = true);
+        this.events.onopen = () => {
+            this.connected = true;
+            this.loadSpeedHistory();
+        };
         this.events.onerror = () => (this.connected = false);
         this.events.onmessage = (event) => this.onStatus(JSON.parse(event.data));
     }
@@ -142,6 +171,7 @@ export class CopyStatusApp extends LitElement {
                     <div class="label">total copy speed</div>
                 </div>
             </header>
+            <speed-graph class="total-graph" .samples=${this.totalHistory} windowMs=${totalHistoryMs}></speed-graph>
             ${this.connected ? nothing : html`<div class="disconnected">Not connected to the server, retrying…</div>`}
 
             <h2>In progress</h2>
@@ -149,7 +179,13 @@ export class CopyStatusApp extends LitElement {
                 ${
                     active.length === 0
                         ? html`<div class="empty">No copies in progress</div>`
-                        : active.map((session) => html`<copy-session-view .session=${session}></copy-session-view>`)
+                        : active.map(
+                              (session) =>
+                                  html`<copy-session-view
+                                      .session=${session}
+                                      .speedHistory=${this.sessionHistory.get(session.id) ?? []}
+                                  ></copy-session-view>`
+                          )
                 }
             </div>
 
@@ -179,11 +215,37 @@ export class CopyStatusApp extends LitElement {
 
     private onStatus(status: IStatus) {
         this.status = status;
+        this.totalHistory = appendSample(
+            this.totalHistory.filter(([time]) => time > status.time - totalHistoryMs),
+            [status.time, status.totalSpeed]
+        );
+        this.sessionHistory = new Map(
+            status.activeSessions.map((session) => [
+                session.id,
+                appendSample(this.sessionHistory.get(session.id) ?? [], [
+                    status.time,
+                    session.files.reduce((total, file) => total + (file.speed ?? 0), 0),
+                ]),
+            ])
+        );
         this.connected = true;
         if (status.lastCompletedId !== this.lastCompletedId) {
             this.lastCompletedId = status.lastCompletedId;
             this.loadCompleted();
         }
+    }
+
+    /**
+     * the speeds recorded before the page opened (or reconnected), followed by any added since
+     */
+    private async loadSpeedHistory() {
+        const response = await fetch('api/speed-history');
+        const history: ISpeedHistory = await response.json();
+        this.totalHistory = mergeSamples(history.total, this.totalHistory);
+        const ids = new Set([...Object.keys(history.sessions).map(Number), ...this.sessionHistory.keys()]);
+        this.sessionHistory = new Map(
+            [...ids].map((id) => [id, mergeSamples(history.sessions[id] ?? [], this.sessionHistory.get(id) ?? [])])
+        );
     }
 
     private showMore() {
@@ -197,6 +259,18 @@ export class CopyStatusApp extends LitElement {
         this.completed = completed.sessions;
         this.completedTotal = completed.total;
     }
+}
+
+function appendSample(samples: SpeedSample[], sample: SpeedSample): SpeedSample[] {
+    return mergeSamples(samples, [sample]);
+}
+
+/**
+ * earlier followed by the samples in later that come after it
+ */
+function mergeSamples(earlier: SpeedSample[], later: SpeedSample[]): SpeedSample[] {
+    const end = earlier.at(-1)?.[0] ?? -Infinity;
+    return [...earlier, ...later.filter(([time]) => time > end)];
 }
 
 customElements.define('copy-status-app', CopyStatusApp);
