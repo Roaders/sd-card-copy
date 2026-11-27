@@ -1,5 +1,5 @@
 import { AfterCopyAction } from '../contracts';
-import { getUsbDevice, UsbPort } from '../helpers';
+import { getUnmountedDrives, getUsbDevice, rescanDrive, UsbPort } from '../helpers';
 import { Logger } from '@nestjs/common';
 import { execFile } from 'child_process';
 import { writeFile } from 'fs/promises';
@@ -53,15 +53,39 @@ export function usbPowerCycle(options: { cameraName: string; vendorId: string; o
         pendingPorts.add(portName);
 
         try {
-            await setTimeout(SETTLE_MS);
+            let rescanned = false;
 
-            // a camera can have more than one drive (an Insta360 has internal and SD card): the last one to finish turns the power off
-            for (const activePath of getActiveSourcePaths()) {
-                const activeDevice = await getUsbDevice(activePath);
-                if (activeDevice?.hub === device.hub && activeDevice.port === device.port) {
-                    logger.log(`Not powering off ${portName} yet: still copying ${activePath}`);
-                    return;
+            for (;;) {
+                await setTimeout(SETTLE_MS);
+
+                // a camera can have more than one drive (an Insta360 has internal and SD card): the last one to finish turns the power off
+                for (const activePath of getActiveSourcePaths()) {
+                    const activeDevice = await getUsbDevice(activePath);
+                    if (activeDevice?.hub === device.hub && activeDevice.port === device.port) {
+                        logger.log(`Not powering off ${portName} yet: still copying ${activePath}`);
+                        return;
+                    }
                 }
+
+                // a drive that did not answer the kernel in time (seen with an X6's SD card) is never mounted or
+                // copied: ask the kernel to read it again once, then wait and check again. Powers off either way
+                const unmounted = await getUnmountedDrives(device);
+                if (unmounted.length === 0) {
+                    break;
+                }
+                if (rescanned) {
+                    logger.error(
+                        `${options.cameraName} drives still not mounted after rescanning, not copied: ${unmounted.join(', ')}`
+                    );
+                    break;
+                }
+                logger.warn(
+                    `${options.cameraName} drives with media were not mounted, rescanning: ${unmounted.join(', ')}`
+                );
+                for (const drive of unmounted) {
+                    await rescanDrive(drive).catch((err) => logger.error(`Rescanning ${drive} failed: ${err}`));
+                }
+                rescanned = true;
             }
 
             await execFileAsync('sync');

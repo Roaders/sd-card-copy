@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
     waits: [] as { ms: number; resolve: () => void }[],
     commands: [] as string[],
     devices: {} as Record<string, UsbDevice>,
+    unmounted: [] as string[][], // what each call to getUnmountedDrives returns, then none
 }));
 
 vi.mock('timers/promises', () => ({
@@ -28,6 +29,10 @@ vi.mock('fs/promises', async (importOriginal) => ({
 vi.mock('../helpers', async (importOriginal) => ({
     ...(await importOriginal<typeof import('../helpers')>()),
     getUsbDevice: async (path: string) => mocks.devices[path],
+    getUnmountedDrives: async () => mocks.unmounted.shift() ?? [],
+    rescanDrive: async (drive: string) => {
+        mocks.commands.push(`rescan ${drive}`);
+    },
 }));
 
 import { insta360PowerCycle } from './insta360.strategy';
@@ -45,6 +50,7 @@ describe('usbPowerCycle', () => {
     beforeEach(() => {
         mocks.waits.length = 0;
         mocks.commands.length = 0;
+        mocks.unmounted = [];
         mocks.devices = {
             '/media/usb0': camera,
             '/media/usb1': camera,
@@ -90,6 +96,43 @@ describe('usbPowerCycle', () => {
         off.resolve();
         await last;
         expect(mocks.commands.at(-1)).toBe('uhubctl -l 2-1.4 -p 4 -a on');
+    });
+
+    it(`rescans a drive that was not mounted and leaves the power on while its copy runs`, async () => {
+        const params = { sourcePath: '/media/usb0', targetPath: '/mnt', deleteSource: true };
+        let active: string[] = [];
+        mocks.unmounted = [['sdb']];
+
+        const cycle = powerCycle(params, () => active);
+        (await nextWait()).resolve();
+
+        // the SD card mounts after the rescan and its copy starts
+        await vi.waitFor(() => expect(mocks.commands).toEqual(['rescan sdb']));
+        active = ['/media/usb1'];
+        const secondSettle = await nextWait();
+        expect(secondSettle.ms).toBe(60 * 1000);
+        secondSettle.resolve();
+        await cycle;
+
+        expect(mocks.commands).toEqual(['rescan sdb']);
+    });
+
+    it(`powers off anyway when a drive is still not mounted after rescanning once`, async () => {
+        mocks.unmounted = [['sdb'], ['sdb']];
+
+        const cycle = powerCycle({ sourcePath: '/media/usb0', targetPath: '/mnt', deleteSource: true }, () => []);
+        (await nextWait()).resolve();
+        (await nextWait()).resolve();
+        const off = await nextWait();
+
+        expect(mocks.commands).toEqual([
+            'rescan sdb',
+            'sync',
+            `write 0 > ${camera.sysfsPath}/authorized`,
+            'uhubctl -l 2-1.4 -p 4 -a off',
+        ]);
+        off.resolve();
+        await cycle;
     });
 
     it(`turns a Garmin camera's port off for 7 minutes by default, leaving the Insta360 alone`, async () => {

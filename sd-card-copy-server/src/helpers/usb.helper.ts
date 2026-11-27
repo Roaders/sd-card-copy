@@ -1,5 +1,6 @@
-import { readFile, realpath } from 'fs/promises';
+import { readdir, readFile, realpath, writeFile } from 'fs/promises';
 import { basename, posix } from 'path';
+import { setTimeout } from 'timers/promises';
 
 export type UsbPort = {
     hub: string; // uhubctl location of the hub, e.g. 2-2
@@ -36,6 +37,46 @@ export async function getUsbDevice(mountPoint: string): Promise<UsbDevice | unde
     return vendorId != null
         ? { vendorId: vendorId.trim(), sysfsPath: device, ...getUsbPort(basename(device)) }
         : undefined;
+}
+
+/**
+ * Returns the drives of a USB device (e.g. sdb) that have media but are not mounted, from /sys and /proc (Linux only).
+ * A camera's SD card is left like this when it does not answer the kernel's first read in time.
+ */
+export async function getUnmountedDrives(device: UsbDevice): Promise<string[]> {
+    const mountInfo = await readFile('/proc/self/mountinfo', 'utf8').catch(() => '');
+    const sources = mountInfo.split('\n').map((line) => line.split(' - ')[1]?.split(' ')[1]);
+    const drives = (await readdir('/sys/class/block').catch(() => [] as string[])).filter((name) =>
+        /^sd[a-z]+$/.test(name)
+    );
+    const unmounted: string[] = [];
+
+    for (const drive of drives) {
+        // e.g. /sys/devices/.../usb2/2-1/2-1.4/2-1.4.3/2-1.4.3:1.0/host0/target0:0:0/0:0:0:1/block/sdb
+        const path = await realpath(`/sys/class/block/${drive}`).catch(() => '');
+        if (!path.startsWith(`${device.sysfsPath}/`)) {
+            continue;
+        }
+        const sectors = await readFile(posix.join(path, 'size'), 'utf8').catch(() => '0');
+        const mounted = sources.some((source) => source != null && new RegExp(`^/dev/${drive}\\d*$`).test(source));
+        if (parseInt(sectors) > 0 && !mounted) {
+            unmounted.push(drive);
+        }
+    }
+
+    return unmounted;
+}
+
+/**
+ * Asks the kernel to read a drive again, then sends remove and add events so that usbmount mounts it (systemd only
+ * starts usbmount when a drive appears, so an add event alone is ignored). Needs write access to /sys/devices.
+ */
+export async function rescanDrive(drive: string) {
+    const path = await realpath(`/sys/class/block/${drive}`);
+    await writeFile(posix.join(path, 'device/rescan'), '1');
+    await writeFile(posix.join(path, 'uevent'), 'remove');
+    await setTimeout(1000);
+    await writeFile(posix.join(path, 'uevent'), 'add');
 }
 
 /**
