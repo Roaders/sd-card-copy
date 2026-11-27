@@ -235,6 +235,54 @@ Make the file executable:
 sudo chmod +x /etc/usbmount/mount.d/makeStartCopyRequest
 ```
 
+## Camera udev rules
+
+Two optional additions on the Pi itself (outside Docker) for cameras plugged in over USB. Run `sudo udevadm control --reload` after adding them; they apply the next time the camera is plugged in.
+
+**Garmin VIRB: faster copies**
+
+Linux limits each USB read from a VIRB Ultra 30 to 120 KB, which caps copies at about 12.5 MB/s. Raising the limit to 1 MB gives about 17.5 MB/s. `/etc/udev/rules.d/90-garmin-virb.rules`:
+
+```text
+ACTION=="add", SUBSYSTEM=="scsi", ENV{DEVTYPE}=="scsi_device", ATTRS{idVendor}=="091e", ATTR{max_sectors}="2048"
+```
+
+**Insta360: mount drives that did not answer in time**
+
+After a ride an X6 sometimes does not answer the kernel's first reads for 30 seconds, so the kernel resets it and usbmount never mounts its drives: nothing is copied. This rule runs a script whenever an Insta360 drive appears. It waits 45 seconds and, if the drive has media but is still not mounted, rescans it and sends remove and add events so usbmount mounts it (at most once every 3 minutes per drive). `insta360PowerCycle` does the same for a drive left unmounted when the camera's other drive was copied. `/etc/udev/rules.d/91-insta360-rescan.rules`:
+
+```text
+ACTION=="add", SUBSYSTEM=="block", KERNEL=="sd[a-z]", ATTRS{idVendor}=="2e1a", RUN+="/usr/bin/systemd-run --no-block --collect --unit=insta360-rescan-%k /usr/local/bin/insta360-rescan.sh %k"
+```
+
+`/usr/local/bin/insta360-rescan.sh` (`sudo chmod 755` it):
+
+```sh
+#!/bin/sh
+# Started by /etc/udev/rules.d/91-insta360-rescan.rules when an Insta360 drive appears.
+# An X6 sometimes does not answer the kernel's first reads after a ride, so its drives are never mounted.
+# After a wait, rescan a drive that has media but is not mounted, and send remove/add so usbmount mounts it.
+dev=$1
+sleep ${RESCAN_DELAY:-45}
+[ -e /sys/class/block/$dev ] || exit 0
+[ "$(cat /sys/class/block/$dev/size)" -gt 0 ] || exit 0        # no media, e.g. charging
+grep -qE "^/dev/$dev[0-9]* " /proc/mounts && exit 0            # mounted
+stamp=/run/insta360-rescan-$dev
+if [ -n "$(find $stamp -mmin -3 2>/dev/null)" ]; then
+    logger -t insta360-rescan "$dev still not mounted after rescanning"
+    exit 0
+fi
+touch $stamp
+logger -t insta360-rescan "$dev has media but is not mounted: rescanning"
+p=$(readlink -f /sys/class/block/$dev)
+echo 1 > $p/device/rescan
+echo remove > $p/uevent
+sleep 1
+echo add > $p/uevent
+```
+
+Its messages are in `journalctl -t insta360-rescan`.
+
 ## Docker
 
 ### docker compose
