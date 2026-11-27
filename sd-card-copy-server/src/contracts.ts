@@ -14,6 +14,7 @@ export interface IAppConfig {
     allowedSourcePaths?: string[];
     strategies?: TokenReplacementStrategy[];
     afterCopy?: AfterCopyAction[];
+    excludeFiles?: string[]; // glob patterns matched against file names (e.g. 'LRV_*.lrv'): matching files are not copied, but are still deleted with delete-source
 }
 
 /**

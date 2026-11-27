@@ -2,7 +2,8 @@ import { CopyService } from './copy.service';
 import { SessionService } from './session.service';
 import { ConfigService } from './config.service';
 import { DateStrategies } from '../strategies';
-import { cp, mkdtemp, rm } from 'fs/promises';
+import { IAppConfig } from '../contracts';
+import { cp, mkdir, mkdtemp, readdir, rm, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
@@ -10,11 +11,13 @@ describe('CopyService sessions', () => {
     let root: string;
     let sessions: SessionService;
     let service: CopyService;
+    let appConfig: IAppConfig;
 
     beforeEach(async () => {
         root = await mkdtemp(join(tmpdir(), 'copy-service-'));
         sessions = new SessionService();
-        const config = { getConfig: async () => ({}) } as unknown as ConfigService;
+        appConfig = {};
+        const config = { getConfig: async () => appConfig } as unknown as ConfigService;
         const noDates = { formattedDateStrategy: () => undefined, timestampStrategy: () => undefined };
         service = new CopyService(noDates as unknown as DateStrategies, config, sessions);
     });
@@ -35,6 +38,24 @@ describe('CopyService sessions', () => {
         expect(session.files[0]).toMatchObject({ path: join('DCIM', 'fileinfo_list.list'), state: 'complete' });
         expect(session.files[0].copiedBytes).toBe(session.files[0].size);
         expect(session.files[0].size).toBeGreaterThan(0);
+    });
+
+    it('does not copy files matching excludeFiles, wherever they are, but still deletes them', async () => {
+        appConfig = { excludeFiles: ['LRV_*.lrv'] };
+        const source = join(root, 'usb0');
+        await mkdir(join(source, 'DCIM', 'Camera01'), { recursive: true });
+        await writeFile(join(source, 'DCIM', 'Camera01', 'LRV_20261127_061428_01_001.lrv'), 'preview');
+        await writeFile(join(source, 'DCIM', 'Camera01', 'VID_20261127_061428_00_001.insv'), 'video');
+        await writeFile(join(source, 'DCIM', 'Camera01', 'VID_LRV_note.lrv'), 'not a preview');
+
+        await service.startCopy({ sourcePath: source, targetPath: join(root, 'out'), deleteSource: true });
+        await vi.waitFor(() => expect(sessions.getStatus().completedCount).toBe(1));
+
+        expect((await readdir(join(root, 'out', 'DCIM', 'Camera01'))).sort()).toEqual([
+            'VID_20261127_061428_00_001.insv',
+            'VID_LRV_note.lrv',
+        ]);
+        expect(await readdir(source)).toEqual([]);
     });
 
     it('records a refused copy with the reason', async () => {

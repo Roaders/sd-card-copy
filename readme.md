@@ -88,6 +88,10 @@ module.exports = {
 
 Optional but recommended. A list of folders that `source-path` must be in (or equal to). Requests for any other `source-path` are rejected with a `400`. As copying can delete the source this stops a request from emptying anything other than your SD card mounts. If not set any `source-path` is allowed.
 
+**excludeFiles**
+
+Optional. Glob patterns matched against file names (not their folders). Matching files are not copied, but are still deleted from the card with `delete-source=true`. For example `excludeFiles: ['LRV_*.lrv']` skips the low resolution preview files an Insta360 records next to each video, which its phone app uses but Insta360 Studio does not need.
+
 **targetPath**
 
 Optional. If set provides the default target path when copying so that it does not have to be specified for each request. Every copy goes into a new folder: if the target folder already exists `-2` (then `-3`...) is appended so files are never overwritten, for example when a camera's internal drive and SD card are copied to the same `{CAMERA_NAME}` folder. The following tokens can be included:

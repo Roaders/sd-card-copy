@@ -12,7 +12,7 @@ import ms from 'ms';
 import { readdir, rm, rmdir } from 'fs/promises';
 import { createReadStream, createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
-import { join, resolve } from 'path';
+import { basename, join, matchesGlob, resolve } from 'path';
 
 @Injectable()
 export class CopyService {
@@ -108,8 +108,10 @@ export class CopyService {
 
         this.logger.log(`Copying ${params.sourcePath} -> ${targetPath} (delete-source: ${params.deleteSource})`);
 
+        const { excludeFiles = [] } = await this.configService.getConfig();
         const filesStream = streamScanPathResults(params.sourcePath).pipe(
             filter((result) => result.stats.isFile()),
+            filter((result) => !excludeFiles.some((pattern) => matchesGlob(basename(result.source), pattern))),
             tap((result) => session.addFile(result.source, result.stats.size)),
             map((file) =>
                 mapFileStats({
